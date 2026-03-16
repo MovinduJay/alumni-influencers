@@ -38,6 +38,39 @@
 
 /*
  *---------------------------------------------------------------
+ * LOAD .env FILE
+ *---------------------------------------------------------------
+ *
+ * Parse the .env file (if present) and populate the environment
+ * so that getenv() / $_SERVER / $_ENV calls work consistently.
+ * This keeps secrets out of source control while supporting
+ * both server-level env vars and the .env convenience file.
+ */
+	$dotenv_path = __DIR__ . DIRECTORY_SEPARATOR . '.env';
+	if (is_file($dotenv_path)) {
+		$lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+		foreach ($lines as $line) {
+			// Skip comments
+			if (strpos(trim($line), '#') === 0) {
+				continue;
+			}
+			// Only process lines with an = sign
+			if (strpos($line, '=') !== false) {
+				list($key, $value) = explode('=', $line, 2);
+				$key   = trim($key);
+				$value = trim($value);
+				// Do not overwrite existing env vars (server-level takes precedence)
+				if (!getenv($key)) {
+					putenv("{$key}={$value}");
+					$_ENV[$key]    = $value;
+					$_SERVER[$key] = $value;
+				}
+			}
+		}
+	}
+
+/*
+ *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT
  *---------------------------------------------------------------
  *
@@ -66,7 +99,9 @@
 switch (ENVIRONMENT)
 {
 	case 'development':
-		error_reporting(-1);
+		// Note: E_DEPRECATED & E_STRICT suppressed due to CodeIgniter 3
+		// dynamic property deprecation warnings on PHP 8.x
+		error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 		ini_set('display_errors', 1);
 	break;
 
