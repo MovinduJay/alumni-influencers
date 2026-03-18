@@ -275,10 +275,10 @@ class Bid_model extends CI_Model
      * @param int $alumni_id Alumni ID
      * @return int Maximum allowed wins (3 or 4)
      */
-    public function get_max_monthly_wins($alumni_id)
+    public function get_max_monthly_wins($alumni_id, $month = NULL)
     {
         $base_limit = (int)(getenv('MAX_FEATURES_PER_MONTH') ?: 3);
-        if ($this->has_event_participation($alumni_id)) {
+        if ($this->has_event_participation($alumni_id, $month)) {
             return $base_limit + 1;
         }
         return $base_limit;
@@ -290,10 +290,10 @@ class Bid_model extends CI_Model
      * @param int $alumni_id Alumni ID
      * @return bool
      */
-    public function can_bid($alumni_id)
+    public function can_bid($alumni_id, $month = NULL)
     {
-        $wins = $this->get_monthly_wins($alumni_id);
-        $max = $this->get_max_monthly_wins($alumni_id);
+        $wins = $this->get_monthly_wins($alumni_id, $month);
+        $max = $this->get_max_monthly_wins($alumni_id, $month);
         return $wins < $max;
     }
 
@@ -313,12 +313,22 @@ class Bid_model extends CI_Model
         $existing = $this->db->get_where('featured_alumni', array('featured_date' => $bid_date))->row();
         if ($existing) return FALSE;
 
-        // Get the highest bid for the date
+        $month = date('Y-m', strtotime($bid_date));
+
+        // Get the highest eligible bid for the date. Eligibility is checked
+        // against the target featured month, including the event bonus rule.
         $this->db->where('bid_date', $bid_date);
         $this->db->where('status', 'pending');
         $this->db->order_by('amount', 'DESC');
-        $this->db->limit(1);
-        $winner = $this->db->get('bids')->row();
+        $pending_bids = $this->db->get('bids')->result();
+
+        $winner = NULL;
+        foreach ($pending_bids as $candidate) {
+            if ($this->can_bid($candidate->alumni_id, $month)) {
+                $winner = $candidate;
+                break;
+            }
+        }
 
         if (!$winner) return FALSE;
 
@@ -335,7 +345,7 @@ class Bid_model extends CI_Model
         $this->db->where('status', 'pending');
         $this->db->update('bids', array('status' => 'lost'));
 
-        // Create featured alumni record — bid_date IS the featured date
+        // Create featured alumni record; bid_date is the featured date.
         $this->db->insert('featured_alumni', array(
             'bid_id'        => $winner->id,
             'featured_date' => $bid_date
@@ -362,10 +372,11 @@ class Bid_model extends CI_Model
     {
         $today = date('Y-m-d');
 
-        $this->db->select('featured_alumni.*, bids.alumni_id, alumni.first_name, alumni.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image, alumni.email, bids.amount as winning_bid');
+        $this->db->select('featured_alumni.*, bids.alumni_id, users.first_name, users.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image, users.email, bids.amount as winning_bid');
         $this->db->from('featured_alumni');
         $this->db->join('bids', 'bids.id = featured_alumni.bid_id');
         $this->db->join('alumni', 'alumni.id = bids.alumni_id');
+        $this->db->join('users', 'users.id = alumni.id');
         $this->db->where('featured_alumni.featured_date', $today);
         $this->db->limit(1);
 
@@ -380,12 +391,37 @@ class Bid_model extends CI_Model
      */
     public function get_recent_featured($limit = 30)
     {
-        $this->db->select('featured_alumni.*, bids.alumni_id, alumni.first_name, alumni.last_name, alumni.linkedin_url, alumni.profile_image');
+        $this->db->select('featured_alumni.*, bids.alumni_id, users.first_name, users.last_name, alumni.linkedin_url, alumni.profile_image');
         $this->db->from('featured_alumni');
         $this->db->join('bids', 'bids.id = featured_alumni.bid_id');
         $this->db->join('alumni', 'alumni.id = bids.alumni_id');
+        $this->db->join('users', 'users.id = alumni.id');
         $this->db->order_by('featured_alumni.featured_date', 'DESC');
         $this->db->limit((int)$limit);
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get featured alumni entries for the last N days for admin review.
+     *
+     * @param int $days Number of days to include, counting today.
+     * @return array
+     */
+    public function get_featured_last_days($days = 30)
+    {
+        $days = max(1, min(365, (int) $days));
+        $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $to = date('Y-m-d');
+
+        $this->db->select('featured_alumni.*, bids.alumni_id, bids.amount as winning_bid, users.first_name, users.last_name, users.email, alumni.linkedin_url, alumni.profile_image');
+        $this->db->from('featured_alumni');
+        $this->db->join('bids', 'bids.id = featured_alumni.bid_id');
+        $this->db->join('alumni', 'alumni.id = bids.alumni_id');
+        $this->db->join('users', 'users.id = alumni.id');
+        $this->db->where('featured_alumni.featured_date >=', $from);
+        $this->db->where('featured_alumni.featured_date <=', $to);
+        $this->db->order_by('featured_alumni.featured_date', 'DESC');
+
         return $this->db->get()->result();
     }
 
@@ -397,10 +433,11 @@ class Bid_model extends CI_Model
      */
     public function get_featured_by_date($featured_date)
     {
-        $this->db->select('featured_alumni.*, bids.alumni_id, alumni.first_name, alumni.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image');
+        $this->db->select('featured_alumni.*, bids.alumni_id, users.first_name, users.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image');
         $this->db->from('featured_alumni');
         $this->db->join('bids', 'bids.id = featured_alumni.bid_id');
         $this->db->join('alumni', 'alumni.id = bids.alumni_id');
+        $this->db->join('users', 'users.id = alumni.id');
         $this->db->where('featured_alumni.featured_date', $featured_date);
         return $this->db->get()->row();
     }
@@ -413,10 +450,11 @@ class Bid_model extends CI_Model
      */
     public function get_featured_collection($options = array())
     {
-        $this->db->select('featured_alumni.featured_date, bids.alumni_id, featured_alumni.bid_id, alumni.first_name, alumni.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image');
+        $this->db->select('featured_alumni.featured_date, bids.alumni_id, featured_alumni.bid_id, users.first_name, users.last_name, alumni.bio, alumni.linkedin_url, alumni.profile_image');
         $this->db->from('featured_alumni');
         $this->db->join('bids', 'bids.id = featured_alumni.bid_id');
         $this->db->join('alumni', 'alumni.id = bids.alumni_id');
+        $this->db->join('users', 'users.id = alumni.id');
 
         if (!empty($options['featured_date'])) {
             $this->db->where('featured_alumni.featured_date', $options['featured_date']);

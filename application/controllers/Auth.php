@@ -107,6 +107,11 @@ class Auth extends MY_Controller
      */
     public function login()
     {
+        if ($this->session->userdata('admin_id')) {
+            redirect('admin');
+            return;
+        }
+
         if ($this->session->userdata('alumni_id')) {
             redirect('profile');
             return;
@@ -142,9 +147,16 @@ class Auth extends MY_Controller
             return;
         }
 
+        if (isset($result['user_type']) && $result['user_type'] === 'admin') {
+            $admin = $result['user'];
+            $this->auth_service->start_admin_session($admin);
+            $this->session->set_flashdata('success', 'Welcome back, ' . htmlspecialchars($admin->first_name, ENT_QUOTES, 'UTF-8') . '!');
+            redirect('admin');
+            return;
+        }
+
         $alumni = $result['alumni'];
         $this->auth_service->start_session($alumni);
-
         $this->session->set_flashdata('success', 'Welcome back, ' . htmlspecialchars($alumni->first_name, ENT_QUOTES, 'UTF-8') . '!');
         redirect('profile');
     }

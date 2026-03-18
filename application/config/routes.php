@@ -117,7 +117,6 @@ $route['bidding/sponsorships/delete/(:num)'] = 'bidding/delete_sponsorship/$1';
 $route['bidding/events'] = 'bidding/events';
 $route['bidding/events/add'] = 'bidding/add_event';
 $route['bidding/events/delete/(:num)'] = 'bidding/delete_event/$1';
-$route['bidding/select-winner'] = 'bidding/select_winner';
 
 /*
 | -------------------------------------------------------------------------
@@ -125,10 +124,13 @@ $route['bidding/select-winner'] = 'bidding/select_winner';
 | -------------------------------------------------------------------------
 */
 $route['admin/api-clients'] = 'admin/api_clients';
+$route['admin'] = 'admin/index';
+$route['admin/featured-alumni'] = 'admin/featured_alumni';
 $route['admin/api-clients/create'] = 'admin/create_client';
 $route['admin/api-clients/revoke/(:num)'] = 'admin/revoke_client/$1';
 $route['admin/api-clients/logs/(:num)'] = 'admin/client_logs/$1';
-$route['admin/api-clients/stats'] = 'admin/api_stats';
+$route['admin/api-clients/stats'] = 'admin/index';
+$route['admin/api-usage'] = 'admin/index';
 
 /*
 | -------------------------------------------------------------------------

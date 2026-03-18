@@ -10,11 +10,13 @@
 
 ## Entity Relationships
 
+- `users` 1:1 `alumni` for alumni accounts
+- `users.user_type = admin` identifies admin accounts
 - `alumni` 1:1 `alumni_outcomes`
 - `programmes` 1:N `alumni_outcomes`
 - `industry_sectors` 1:N `alumni_outcomes`
 - `alumni` M:N `skills` through `alumni_skills`
-- `alumni` 1:N `analytics_filter_presets`
+- `users` 1:N `analytics_filter_presets` for admin-owned presets
 - `api_clients` M:N `api_scopes` through `api_client_scopes`
 - `api_clients` 1:N `api_access_logs`
 

@@ -18,6 +18,7 @@ class Admin_service
     {
         $this->CI = &get_instance();
         $this->CI->load->model('Api_client_model');
+        $this->CI->load->model('Bid_model');
         $this->CI->load->library('bid_winner_service');
     }
 
@@ -149,6 +150,17 @@ class Admin_service
     public function get_api_usage_stats()
     {
         return $this->CI->Api_client_model->get_usage_stats();
+    }
+
+    /**
+     * Retrieve recent Alumni of the Day winners.
+     *
+     * @param int $days
+     * @return array
+     */
+    public function get_recent_featured_alumni($days = 30)
+    {
+        return $this->CI->Bid_model->get_featured_last_days($days);
     }
 
     /**

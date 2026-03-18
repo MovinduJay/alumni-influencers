@@ -4,210 +4,178 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 /**
  * Alumni_model
  *
- * Handles all database operations for the alumni (users) table.
- * Includes registration, authentication, verification, and password reset.
+ * Handles alumni accounts using the normalized users/alumni subtype model.
+ * Public methods return the same shape the controllers expect: id, email,
+ * first_name, last_name, auth flags, and alumni profile fields together.
  */
 class Alumni_model extends CI_Model
 {
-    /**
-     * Constructor - load database
-     */
     public function __construct()
     {
         $this->load->database();
     }
 
-    /**
-     * Create a new alumni record
-     *
-     * @param array $data Alumni registration data
-     * @return int|bool Insert ID on success, FALSE on failure
-     */
     public function create($data)
     {
-        $this->db->insert('alumni', $data);
-        return $this->db->insert_id();
+        $user = array(
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'user_type' => 'alumni',
+            'email_verified' => isset($data['email_verified']) ? (int) $data['email_verified'] : 0,
+            'verification_token' => isset($data['verification_token']) ? $data['verification_token'] : NULL,
+            'verification_expires' => isset($data['verification_expires']) ? $data['verification_expires'] : NULL,
+            'reset_token' => isset($data['reset_token']) ? $data['reset_token'] : NULL,
+            'reset_expires' => isset($data['reset_expires']) ? $data['reset_expires'] : NULL,
+            'is_active' => isset($data['is_active']) ? (int) $data['is_active'] : 1
+        );
+
+        $profile = array(
+            'bio' => isset($data['bio']) ? $data['bio'] : NULL,
+            'linkedin_url' => isset($data['linkedin_url']) ? $data['linkedin_url'] : NULL,
+            'profile_image' => isset($data['profile_image']) ? $data['profile_image'] : NULL
+        );
+
+        $this->db->trans_start();
+        $this->db->insert('users', $user);
+        $id = (int) $this->db->insert_id();
+        $profile['id'] = $id;
+        $this->db->insert('alumni', $profile);
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() === FALSE ? FALSE : $id;
     }
 
-    /**
-     * Find alumni by email
-     *
-     * @param string $email Email address
-     * @return object|null Alumni record or null
-     */
     public function find_by_email($email)
     {
-        return $this->db->get_where('alumni', array('email' => $email))->row();
+        return $this->base_select()
+            ->where('users.email', strtolower(trim((string) $email)))
+            ->where('users.user_type', 'alumni')
+            ->get()->row();
     }
 
-    /**
-     * Find alumni by ID
-     *
-     * @param int $id Alumni ID
-     * @return object|null Alumni record or null
-     */
     public function find_by_id($id)
     {
-        return $this->db->get_where('alumni', array('id' => $id))->row();
+        return $this->base_select()
+            ->where('users.id', (int) $id)
+            ->where('users.user_type', 'alumni')
+            ->get()->row();
     }
 
-    /**
-     * Find alumni by verification token
-     *
-     * Accepts raw token from URL. Matches both:
-     * - SHA-256 hash (new secure storage)
-     * - Legacy plaintext token (for backward compatibility)
-     *
-     * @param string $token Raw verification token
-     * @return object|null Alumni record or null
-     */
     public function find_by_verification_token($token)
     {
         $is_hash = preg_match('/^[a-f0-9]{64}$/i', $token) === 1;
         $hash = $is_hash ? $token : hash('sha256', $token);
 
-        $this->db->group_start();
-        $this->db->where('verification_token', $hash);
-        $this->db->or_where('verification_token', $token);
-        $this->db->group_end();
-
-        return $this->db->get('alumni')->row();
+        return $this->base_select()
+            ->where('users.user_type', 'alumni')
+            ->group_start()
+            ->where('users.verification_token', $hash)
+            ->or_where('users.verification_token', $token)
+            ->group_end()
+            ->get()->row();
     }
 
-    /**
-     * Find alumni by reset token
-     *
-     * Accepts raw token from URL. Matches both:
-     * - SHA-256 hash (new secure storage)
-     * - Legacy plaintext token (for backward compatibility)
-     *
-     * @param string $token Raw reset token
-     * @return object|null Alumni record or null
-     */
     public function find_by_reset_token($token)
     {
         $is_hash = preg_match('/^[a-f0-9]{64}$/i', $token) === 1;
         $hash = $is_hash ? $token : hash('sha256', $token);
 
-        $this->db->group_start();
-        $this->db->where('reset_token', $hash);
-        $this->db->or_where('reset_token', $token);
-        $this->db->group_end();
-
-        return $this->db->get('alumni')->row();
+        return $this->base_select()
+            ->where('users.user_type', 'alumni')
+            ->group_start()
+            ->where('users.reset_token', $hash)
+            ->or_where('users.reset_token', $token)
+            ->group_end()
+            ->get()->row();
     }
 
-    /**
-     * Update alumni record
-     *
-     * @param int   $id   Alumni ID
-     * @param array $data Data to update
-     * @return bool
-     */
     public function update($id, $data)
     {
-        $this->db->where('id', $id);
-        return $this->db->update('alumni', $data);
+        $user_fields = array('email', 'password', 'first_name', 'last_name', 'email_verified', 'verification_token', 'verification_expires', 'reset_token', 'reset_expires', 'is_active');
+        $profile_fields = array('bio', 'linkedin_url', 'profile_image');
+        $user_update = array();
+        $profile_update = array();
+
+        foreach ($user_fields as $field) {
+            if (array_key_exists($field, $data)) {
+                $user_update[$field] = $data[$field];
+            }
+        }
+
+        foreach ($profile_fields as $field) {
+            if (array_key_exists($field, $data)) {
+                $profile_update[$field] = $data[$field];
+            }
+        }
+
+        $this->db->trans_start();
+        if (!empty($user_update)) {
+            $this->db->where('id', (int) $id)->where('user_type', 'alumni')->update('users', $user_update);
+        }
+        if (!empty($profile_update)) {
+            $this->db->where('id', (int) $id)->update('alumni', $profile_update);
+        }
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() !== FALSE;
     }
 
-    /**
-     * Verify alumni email
-     *
-     * @param int $id Alumni ID
-     * @return bool
-     */
     public function verify_email($id)
     {
         return $this->update($id, array(
-            'email_verified'       => 1,
-            'verification_token'   => NULL,
+            'email_verified' => 1,
+            'verification_token' => NULL,
             'verification_expires' => NULL
         ));
     }
 
-    /**
-     * Set password reset token
-     *
-     * @param int    $id    Alumni ID
-     * @param string $token Raw reset token (stored as SHA-256 hash)
-     * @param string $expires Expiry datetime
-     * @return bool
-     */
     public function set_reset_token($id, $token, $expires)
     {
         $is_hash = preg_match('/^[a-f0-9]{64}$/i', $token) === 1;
         return $this->update($id, array(
-            'reset_token'   => $is_hash ? $token : hash('sha256', $token),
+            'reset_token' => $is_hash ? $token : hash('sha256', $token),
             'reset_expires' => $expires
         ));
     }
 
-    /**
-     * Update password
-     *
-     * @param int    $id       Alumni ID
-     * @param string $password Hashed password
-     * @return bool
-     */
     public function update_password($id, $password)
     {
         return $this->update($id, array(
-            'password'      => $password,
-            'reset_token'   => NULL,
+            'password' => $password,
+            'reset_token' => NULL,
             'reset_expires' => NULL
         ));
     }
 
-    /**
-     * Check if email already exists
-     *
-     * @param string $email Email address
-     * @return bool
-     */
     public function email_exists($email)
     {
-        return $this->db->get_where('alumni', array('email' => $email))->num_rows() > 0;
+        return $this->db->get_where('users', array('email' => strtolower(trim((string) $email))))->num_rows() > 0;
     }
 
-    /**
-     * Get complete alumni profile with all related data
-     *
-     * @param int $id Alumni ID
-     * @return array Complete profile data
-     */
     public function get_full_profile($id)
     {
         $alumni = $this->find_by_id($id);
-        if (!$alumni) return NULL;
+        if (!$alumni) {
+            return NULL;
+        }
 
-        // Remove sensitive fields
-        unset($alumni->password);
-        unset($alumni->verification_token);
-        unset($alumni->verification_expires);
-        unset($alumni->reset_token);
-        unset($alumni->reset_expires);
+        unset($alumni->password, $alumni->verification_token, $alumni->verification_expires, $alumni->reset_token, $alumni->reset_expires);
 
-        $profile = array('alumni' => $alumni);
-
-        // Load related data
-        $profile['degrees'] = $this->db->get_where('degrees', array('alumni_id' => $id))->result();
-        $profile['certifications'] = $this->db->get_where('certifications', array('alumni_id' => $id))->result();
-        $profile['licences'] = $this->db->get_where('licences', array('alumni_id' => $id))->result();
-        $profile['courses'] = $this->db->get_where('courses', array('alumni_id' => $id))->result();
-        $profile['employment_history'] = $this->db->get_where('employment_history', array('alumni_id' => $id))->result();
-
-        return $profile;
+        return array(
+            'alumni' => $alumni,
+            'degrees' => $this->db->get_where('degrees', array('alumni_id' => $id))->result(),
+            'certifications' => $this->db->get_where('certifications', array('alumni_id' => $id))->result(),
+            'licences' => $this->db->get_where('licences', array('alumni_id' => $id))->result(),
+            'courses' => $this->db->get_where('courses', array('alumni_id' => $id))->result(),
+            'employment_history' => $this->db->get_where('employment_history', array('alumni_id' => $id))->result()
+        );
     }
 
-    /**
-     * Get all active alumni (for admin/listing purposes)
-     *
-     * @return array List of alumni
-     */
     public function get_all_active()
     {
         $options = func_num_args() > 0 && is_array(func_get_arg(0)) ? func_get_arg(0) : array();
-        // Baseline public select: $this->db->select('id, first_name, last_name, linkedin_url, profile_image, created_at');
         $allowed_fields = array('id', 'first_name', 'last_name', 'bio', 'linkedin_url', 'profile_image', 'created_at');
         $fields = isset($options['fields']) && is_array($options['fields']) && !empty($options['fields'])
             ? array_values(array_intersect($options['fields'], $allowed_fields))
@@ -217,76 +185,74 @@ class Alumni_model extends CI_Model
             $fields = array('id', 'first_name', 'last_name');
         }
 
-        $this->db->select(implode(', ', $fields));
-        $this->db->where('is_active', 1);
-        $this->db->where('email_verified', 1);
+        $select = array();
+        foreach ($fields as $field) {
+            $select[] = in_array($field, array('bio', 'linkedin_url', 'profile_image'), TRUE)
+                ? 'alumni.' . $field
+                : 'users.' . $field;
+        }
+
+        $this->db->select(implode(', ', $select));
+        $this->db->from('users');
+        $this->db->join('alumni', 'alumni.id = users.id', 'inner');
+        $this->db->where('users.user_type', 'alumni');
+        $this->db->where('users.is_active', 1);
+        $this->db->where('users.email_verified', 1);
 
         if (!empty($options['name'])) {
             $this->db->group_start();
-            $this->db->like('first_name', $options['name']);
-            $this->db->or_like('last_name', $options['name']);
+            $this->db->like('users.first_name', $options['name']);
+            $this->db->or_like('users.last_name', $options['name']);
             $this->db->group_end();
         }
 
         $sort = isset($options['sort']) ? $options['sort'] : 'created_at';
         $direction = isset($options['direction']) ? $options['direction'] : 'DESC';
         $sortable = array('id', 'first_name', 'last_name', 'created_at');
-        if (!in_array($sort, $sortable, TRUE)) {
-            $sort = 'created_at';
-        }
+        $sort = in_array($sort, $sortable, TRUE) ? $sort : 'created_at';
         $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-        $this->db->order_by($sort, $direction);
+        $this->db->order_by('users.' . $sort, $direction);
 
         if (isset($options['limit'])) {
-            $limit = max(1, min(100, (int)$options['limit']));
-            $offset = isset($options['offset']) ? max(0, (int)$options['offset']) : 0;
-            $this->db->limit($limit, $offset);
+            $this->db->limit(max(1, min(100, (int) $options['limit'])), isset($options['offset']) ? max(0, (int) $options['offset']) : 0);
         }
 
-        return $this->db->get('alumni')->result();
+        return $this->db->get()->result();
     }
 
-    /**
-     * Count active alumni for paginated APIs.
-     *
-     * @param array $options
-     * @return int
-     */
     public function count_all_active($options = array())
     {
-        $this->db->from('alumni');
-        $this->db->where('is_active', 1);
-        $this->db->where('email_verified', 1);
+        $this->db->from('users');
+        $this->db->join('alumni', 'alumni.id = users.id', 'inner');
+        $this->db->where('users.user_type', 'alumni');
+        $this->db->where('users.is_active', 1);
+        $this->db->where('users.email_verified', 1);
 
         if (!empty($options['name'])) {
             $this->db->group_start();
-            $this->db->like('first_name', $options['name']);
-            $this->db->or_like('last_name', $options['name']);
+            $this->db->like('users.first_name', $options['name']);
+            $this->db->or_like('users.last_name', $options['name']);
             $this->db->group_end();
         }
 
-        return (int)$this->db->count_all_results();
+        return (int) $this->db->count_all_results();
     }
 
-    /**
-     * Create alumni via API write operations.
-     *
-     * @param array $data
-     * @return int|bool
-     */
     public function create_api_alumni($data)
     {
         return $this->create($data);
     }
 
-    /**
-     * Soft-delete an alumni record from public APIs.
-     *
-     * @param int $id
-     * @return bool
-     */
     public function deactivate($id)
     {
         return $this->update($id, array('is_active' => 0));
+    }
+
+    protected function base_select()
+    {
+        return $this->db
+            ->select('users.*, alumni.bio, alumni.linkedin_url, alumni.profile_image')
+            ->from('users')
+            ->join('alumni', 'alumni.id = users.id', 'inner');
     }
 }

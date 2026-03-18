@@ -133,13 +133,6 @@
                 <a href="<?php echo site_url('bidding/history'); ?>" class="btn btn-outline-secondary w-100">
                     <i class="fas fa-list"></i> View Bid History
                 </a>
-                <?php if ($this->session->userdata('role') === 'admin'): ?>
-                    <?php echo form_open('bidding/select-winner', array('class' => 'mt-2')); ?>
-                        <button type="submit" class="btn btn-outline-dark w-100">
-                            <i class="fas fa-magic"></i> Finalize Today's Winner
-                        </button>
-                    <?php echo form_close(); ?>
-                <?php endif; ?>
             </div>
         </div>
 

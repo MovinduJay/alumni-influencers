@@ -20,6 +20,7 @@ class Auth_service
         $this->CI = &get_instance();
         $this->CI->load->database();
         $this->CI->load->model('Alumni_model');
+        $this->CI->load->model('Admin_model');
         $this->CI->load->helper('email_config');
     }
 
@@ -443,6 +444,18 @@ class Auth_service
             );
         }
 
+        $admin = $this->CI->db->table_exists('users')
+            ? $this->CI->Admin_model->find_active_by_email($email)
+            : NULL;
+        if ($admin && password_verify($password, $admin->password)) {
+            return array(
+                'ok' => TRUE,
+                'status' => 200,
+                'user_type' => 'admin',
+                'user' => $admin
+            );
+        }
+
         $alumni = $this->CI->Alumni_model->find_by_email($email);
         if (!$alumni || !password_verify($password, $alumni->password)) {
             return array(
@@ -474,6 +487,8 @@ class Auth_service
         return array(
             'ok' => TRUE,
             'status' => 200,
+            'user_type' => 'alumni',
+            'user' => $alumni,
             'alumni' => $alumni
         );
     }
@@ -487,7 +502,35 @@ class Auth_service
     public function start_session($alumni)
     {
         $this->CI->session->sess_regenerate(TRUE);
+        $this->CI->session->unset_userdata(array('admin_id'));
         $session_data = $this->build_session_data($alumni);
+        $this->CI->session->set_userdata($session_data);
+
+        return $session_data;
+    }
+
+    /**
+     * Regenerate the session and persist authenticated admin state.
+     *
+     * @param object $admin
+     * @return array
+     */
+    public function start_admin_session($admin)
+    {
+        $this->CI->session->sess_regenerate(TRUE);
+        $this->CI->session->unset_userdata(array('alumni_id'));
+        $now = time();
+        $session_data = array(
+            'admin_id' => $admin->id,
+            'email' => $admin->email,
+            'first_name' => $admin->first_name,
+            'last_name' => $admin->last_name,
+            'role' => 'admin',
+            'user_type' => 'admin',
+            'logged_in' => TRUE,
+            'login_time' => $now,
+            'last_activity' => $now
+        );
         $this->CI->session->set_userdata($session_data);
 
         return $session_data;
@@ -508,7 +551,8 @@ class Auth_service
             'email' => $alumni->email,
             'first_name' => $alumni->first_name,
             'last_name' => $alumni->last_name,
-            'role' => $alumni->role ?? 'alumni',
+            'role' => 'alumni',
+            'user_type' => 'alumni',
             'logged_in' => TRUE,
             'login_time' => $now,
             'last_activity' => $now

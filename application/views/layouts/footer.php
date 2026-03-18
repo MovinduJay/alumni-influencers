@@ -1,7 +1,7 @@
-    </div><!-- /.container -->
+    </div><!-- /.container-fluid -->
 
     <footer class="footer mt-5">
-        <div class="container text-center">
+        <div class="container-fluid px-3 text-center">
             <p class="mb-1">&copy; <?php echo date('Y'); ?> Alumni Influencers Platform - Phantasmagoria Ltd</p>
             <p class="mb-0 small">University of Westminster Alumni Engagement</p>
         </div>

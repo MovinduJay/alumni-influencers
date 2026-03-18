@@ -30,10 +30,12 @@ class MY_Controller extends CI_Controller
         if ($last_activity > 0 && (time() - $last_activity) > $timeout) {
             $this->session->unset_userdata(array(
                 'alumni_id',
+                'admin_id',
                 'email',
                 'first_name',
                 'last_name',
                 'role',
+                'user_type',
                 'logged_in',
                 'login_time',
                 'last_activity'
@@ -85,11 +87,25 @@ class MY_Controller extends CI_Controller
     {
         $this->require_auth('Please log in to access admin features.');
 
-        if ($this->session->userdata('role') === 'admin') {
+        if ($this->session->userdata('user_type') === 'admin' && (int) $this->session->userdata('admin_id') > 0) {
             return;
         }
 
         show_error('Access denied. Admin privileges required.', 403);
+    }
+
+    /**
+     * Require an authenticated alumni session.
+     */
+    protected function require_alumni()
+    {
+        $this->require_auth('Please log in to access alumni features.');
+
+        if ($this->session->userdata('user_type') === 'alumni' && (int) $this->session->userdata('alumni_id') > 0) {
+            return;
+        }
+
+        show_error('Access denied. Alumni account required.', 403);
     }
 
     /**
@@ -116,15 +132,15 @@ class MY_Authenticated_Controller extends MY_Controller
     public function __construct($message = 'Please log in to continue.')
     {
         parent::__construct();
-        $this->require_auth($message);
+        $this->require_alumni();
     }
 }
 
-class MY_Admin_Controller extends MY_Authenticated_Controller
+class MY_Admin_Controller extends MY_Controller
 {
     public function __construct()
     {
-        parent::__construct('Please log in to access admin features.');
+        parent::__construct();
         $this->require_admin();
     }
 }

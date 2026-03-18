@@ -3,6 +3,7 @@
     grid-template-columns: 220px minmax(0, 1fr);
     gap: 20px;
     align-items: start;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .analytics-sidebar {
@@ -12,6 +13,7 @@
     color: #fff;
     border-radius: 8px;
     padding: 16px;
+    min-height: calc(100vh - 120px);
 }
 
 .sidebar-title {
@@ -34,6 +36,14 @@
 .analytics-sidebar a.active {
     background: #243044;
     color: #fff;
+}
+
+.analytics-sidebar::after {
+    content: "";
+    display: block;
+    margin-top: 18px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .analytics-main {
@@ -60,8 +70,10 @@
 
 .analytics-header h1 {
     font-size: 28px;
+    font-weight: 800;
     line-height: 1.2;
     margin: 0 0 6px;
+    letter-spacing: -0.015em;
 }
 
 .analytics-header p,
@@ -154,9 +166,11 @@
 .metric-grid strong {
     display: block;
     font-size: 28px;
+    font-weight: 700;
     line-height: 1;
     margin-top: 8px;
     color: #0f172a;
+    letter-spacing: -0.025em;
 }
 
 .chart-grid {
@@ -183,6 +197,7 @@
 .chart-card h2,
 .section-heading h2 {
     font-size: 17px;
+    font-weight: 700;
     margin: 0;
 }
 
@@ -207,7 +222,7 @@
 }
 
 .insight.critical { border-color: #dc2626; }
-.insight.significant { border-color: #f59e0b; }
+.insight.significant { border-color: #0891b2; }
 .insight.emerging { border-color: #2563eb; }
 
 .insight strong {
@@ -230,6 +245,11 @@
         display: flex;
         overflow-x: auto;
         gap: 6px;
+        min-height: 0;
+    }
+
+    .analytics-sidebar::after {
+        display: none;
     }
 
     .sidebar-title {

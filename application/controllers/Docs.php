@@ -77,6 +77,33 @@ class Docs extends CI_Controller
                             'linkedin_url' => array('type' => 'string', 'format' => 'uri')
                         )
                     ),
+                    'LoginInput' => array(
+                        'type' => 'object',
+                        'required' => array('email', 'password'),
+                        'properties' => array(
+                            'email' => array('type' => 'string', 'format' => 'email'),
+                            'password' => array('type' => 'string', 'format' => 'password')
+                        )
+                    ),
+                    'TokenInput' => array(
+                        'type' => 'object',
+                        'required' => array('token'),
+                        'properties' => array('token' => array('type' => 'string'))
+                    ),
+                    'ForgotPasswordInput' => array(
+                        'type' => 'object',
+                        'required' => array('email'),
+                        'properties' => array('email' => array('type' => 'string', 'format' => 'email'))
+                    ),
+                    'ResetPasswordInput' => array(
+                        'type' => 'object',
+                        'required' => array('token', 'password', 'confirm_password'),
+                        'properties' => array(
+                            'token' => array('type' => 'string'),
+                            'password' => array('type' => 'string', 'format' => 'password'),
+                            'confirm_password' => array('type' => 'string', 'format' => 'password')
+                        )
+                    ),
                     'DegreeInput' => $this->recordSchema(array('title', 'institution')),
                     'CertificationInput' => $this->recordSchema(array('title', 'issuer')),
                     'LicenceInput' => $this->recordSchema(array('title', 'awarding_body')),
@@ -145,6 +172,12 @@ class Docs extends CI_Controller
                             'is_active' => array('type' => 'boolean')
                         )
                     ),
+                    'WinnerSelectionInput' => array(
+                        'type' => 'object',
+                        'properties' => array(
+                            'featured_date' => array('type' => 'string', 'format' => 'date', 'example' => '2026-04-30')
+                        )
+                    ),
                     'AnalyticsFilters' => array(
                         'type' => 'object',
                         'properties' => array(
@@ -162,14 +195,43 @@ class Docs extends CI_Controller
                 array('BearerAuth' => array())
             ),
             'paths' => array_merge(
+                $this->authPaths(),
                 $this->publicPaths(),
-                $this->sessionPaths()
+                $this->sessionPaths(),
+                $this->adminPaths()
             )
         );
 
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
+
+    private function authPaths()
+    {
+        return array(
+            '/auth/register' => array(
+                'post' => $this->writeOp('Authentication', 'Register a university-domain alumni account', '#/components/schemas/AlumniCreate', array('status' => 'created', 'message' => 'Registration successful. Please verify your email.'), array(), FALSE)
+            ),
+            '/auth/verify' => array(
+                'post' => $this->writeOp('Authentication', 'Verify an email address using the emailed token', '#/components/schemas/TokenInput', array('status' => 'success', 'message' => 'Email verified successfully.'), array(), FALSE, FALSE)
+            ),
+            '/auth/forgot-password' => array(
+                'post' => $this->writeOp('Authentication', 'Request a password reset email', '#/components/schemas/ForgotPasswordInput', array('status' => 'success', 'message' => 'If an account with that email exists, a password reset link has been sent.'), array(), FALSE, FALSE)
+            ),
+            '/auth/reset-password' => array(
+                'post' => $this->writeOp('Authentication', 'Reset password using an emailed token', '#/components/schemas/ResetPasswordInput', array('status' => 'success', 'message' => 'Password reset successfully.'), array(), FALSE, FALSE)
+            ),
+            '/auth/login' => array(
+                'post' => $this->writeOp('Authentication', 'Create an authenticated alumni session', '#/components/schemas/LoginInput', array('status' => 'success', 'message' => 'Login successful.', 'session' => array('logged_in' => TRUE)), array(), FALSE, FALSE)
+            ),
+            '/auth/me' => array(
+                'get' => $this->simpleOp('Authentication', 'Return the current session user', 'success', array('user' => array('id' => 1, 'email' => 'alumni@westminster.ac.uk')), array('CookieSession' => array()))
+            ),
+            '/auth/logout' => array(
+                'post' => $this->simpleOp('Authentication', 'Destroy the current session', 'success', array('message' => 'Logout successful.'), array('CookieSession' => array()))
+            )
+        );
     }
 
     private function publicPaths()
@@ -246,6 +308,28 @@ class Docs extends CI_Controller
             '/me/events/{id}' => array(
                 'get' => $this->simpleOp('Events', 'Get an event participation record', 'success', array('event' => array('id' => 5, 'event_name' => 'Westminster Alumni Meetup')), array('CookieSession' => array()), TRUE),
                 'delete' => $this->deleteOp('Events', 'Delete an event participation record', array('CookieSession' => array()), TRUE)
+            )
+        );
+    }
+
+    private function adminPaths()
+    {
+        return array(
+            '/admin/api-clients' => array(
+                'get' => $this->simpleOp('Admin', 'List API clients and assigned scopes', 'success', array('clients' => array(array('id' => 1, 'client_name' => 'Analytics Dashboard', 'scope' => 'read:alumni,read:analytics'))), array('CookieSession' => array())),
+                'post' => $this->writeOp('Admin', 'Create a scoped API client', '#/components/schemas/ApiClientCreate', array('status' => 'created', 'message' => 'API client created successfully.', 'client' => array('id' => 4, 'scope' => 'read:alumni_of_day')), array('CookieSession' => array()))
+            ),
+            '/admin/api-clients/{id}' => array(
+                'patch' => $this->writeOp('Admin', 'Activate or revoke an API client', '#/components/schemas/ApiClientStatusUpdate', array('status' => 'success', 'message' => 'API client revoked.', 'client' => array('id' => 1, 'is_active' => false)), array('CookieSession' => array()), TRUE, FALSE)
+            ),
+            '/admin/api-clients/{id}/logs' => array(
+                'get' => $this->simpleOp('Admin', 'List request logs for one API client', 'success', array('logs' => array(array('endpoint' => 'api/v1/analytics/overview', 'method' => 'GET'))), array('CookieSession' => array()), TRUE)
+            ),
+            '/admin/api-stats' => array(
+                'get' => $this->simpleOp('Admin', 'Return API usage statistics by client and endpoint', 'success', array('stats' => array('client_stats' => array(), 'endpoint_stats' => array(), 'recent_access' => array())), array('CookieSession' => array()))
+            ),
+            '/admin/select-winner' => array(
+                'post' => $this->writeOp('Admin', 'Manually run featured-alumni winner selection for a date', '#/components/schemas/WinnerSelectionInput', array('status' => 'success', 'message' => 'Winner selected.'), array('CookieSession' => array()), FALSE, FALSE)
             )
         );
     }

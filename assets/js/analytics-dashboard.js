@@ -20,12 +20,36 @@
         matrixChart: 'Programme to Sector Pathways',
         biddingChart: 'Featured Placement Outcomes'
     };
-    var palette = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#475569'];
-    var gapColors = { critical: '#dc2626', significant: '#f59e0b', emerging: '#2563eb', covered: '#16a34a', missing: '#dc2626', partial: '#f59e0b' };
+    var palette = ['#2563eb', '#16a34a', '#0891b2', '#dc2626', '#7c3aed', '#0b4f4a', '#db2777', '#475569'];
+    var gapColors = { critical: '#dc2626', significant: '#0891b2', emerging: '#2563eb', covered: '#16a34a', missing: '#dc2626', partial: '#64748b' };
 
     var form = document.getElementById('analytics-filters');
     var loading = document.getElementById('loading-state');
     var error = document.getElementById('error-state');
+    var savePresetModalElement = document.getElementById('save-preset-modal');
+    var savePresetForm = document.getElementById('save-preset-form');
+    var presetNameInput = document.getElementById('preset-name');
+    var savePresetModal = savePresetModalElement && window.bootstrap ? new window.bootstrap.Modal(savePresetModalElement) : null;
+    var noDataPlugin = {
+        id: 'noDataMessage',
+        afterDraw: function (chart) {
+            if (!chart.options.plugins.noDataMessage || !chart.options.plugins.noDataMessage.display) {
+                return;
+            }
+
+            var ctx = chart.ctx;
+            var area = chart.chartArea;
+            ctx.save();
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 15px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No results for the selected filters', (area.left + area.right) / 2, (area.top + area.bottom) / 2);
+            ctx.restore();
+        }
+    };
+
+    Chart.register(noDataPlugin);
 
     function params() {
         var data = new FormData(form);
@@ -88,6 +112,14 @@
         return rows.map(function (row) { return Number(row.value || 0); });
     }
 
+    function datasetsHaveValues(datasets) {
+        return datasets.some(function (dataset) {
+            return (dataset.data || []).some(function (value) {
+                return Number(value || 0) > 0;
+            });
+        });
+    }
+
     function renderChart(id, type, labels, datasets, options) {
         var canvas = document.getElementById(id);
         if (!canvas) {
@@ -96,6 +128,8 @@
         if (charts[id]) {
             charts[id].destroy();
         }
+
+        var hasValues = labels.length > 0 && datasetsHaveValues(datasets);
         charts[id] = new Chart(canvas, {
             type: type,
             data: { labels: labels, datasets: datasets },
@@ -105,7 +139,8 @@
                 animation: { duration: 700 },
                 plugins: {
                     legend: { display: true, position: 'bottom' },
-                    tooltip: { enabled: true }
+                    tooltip: { enabled: hasValues },
+                    noDataMessage: { display: !hasValues }
                 },
                 scales: type === 'pie' || type === 'doughnut' || type === 'radar' ? {} : {
                     x: { title: { display: true, text: 'Category' } },
@@ -238,7 +273,7 @@
         renderChart('biddingChart', 'doughnut', rowsToLabels(data.charts.bidding_outcomes), [{
             label: 'Bids',
             data: rowsToValues(data.charts.bidding_outcomes),
-            backgroundColor: ['#16a34a', '#dc2626', '#f59e0b']
+            backgroundColor: ['#16a34a', '#dc2626', '#64748b']
         }]);
     }
 
@@ -481,6 +516,50 @@
         return (div.textContent || div.innerText || 'Server returned an HTML error response.').replace(/\s+/g, ' ').trim().slice(0, 500);
     }
 
+    function setSidebarActive(hash) {
+        var targetHash = hash || '#overview';
+        document.querySelectorAll('.analytics-sidebar a').forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === targetHash);
+        });
+    }
+
+    function initSidebarNavigation() {
+        var links = Array.prototype.slice.call(document.querySelectorAll('.analytics-sidebar a'));
+        if (!links.length) {
+            return;
+        }
+
+        links.forEach(function (link) {
+            link.addEventListener('click', function () {
+                setSidebarActive(link.getAttribute('href'));
+            });
+        });
+
+        window.addEventListener('hashchange', function () {
+            setSidebarActive(window.location.hash);
+        });
+
+        if ('IntersectionObserver' in window) {
+            var sections = links.map(function (link) {
+                return document.querySelector(link.getAttribute('href'));
+            }).filter(Boolean);
+
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        setSidebarActive('#' + entry.target.id);
+                    }
+                });
+            }, { rootMargin: '-25% 0px -65% 0px', threshold: 0 });
+
+            sections.forEach(function (section) {
+                observer.observe(section);
+            });
+        }
+
+        setSidebarActive(window.location.hash || '#overview');
+    }
+
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         load();
@@ -500,7 +579,23 @@
     });
 
     document.getElementById('save-preset').addEventListener('click', function () {
-        var name = window.prompt('Preset name');
+        if (!savePresetModal) {
+            setError('The preset dialog is not ready. Refresh the page and try again.');
+            return;
+        }
+        presetNameInput.value = '';
+        savePresetModal.show();
+    });
+
+    if (savePresetModalElement) {
+        savePresetModalElement.addEventListener('shown.bs.modal', function () {
+            presetNameInput.focus();
+        });
+    }
+
+    savePresetForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var name = presetNameInput.value.trim();
         if (!name) return;
         var body = params();
         body.set('name', name);
@@ -543,5 +638,6 @@
         });
     });
 
+    initSidebarNavigation();
     load();
 }());

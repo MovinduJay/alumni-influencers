@@ -9,7 +9,7 @@
     <p><strong>Scopes:</strong> <code><?php echo htmlspecialchars($new_client['scope'], ENT_QUOTES, 'UTF-8'); ?></code></p>
     <p><strong>API Key:</strong> <code><?php echo htmlspecialchars($new_client['api_key'], ENT_QUOTES, 'UTF-8'); ?></code></p>
     <p><strong>Bearer Token:</strong> <code><?php echo htmlspecialchars($new_client['bearer_token'], ENT_QUOTES, 'UTF-8'); ?></code></p>
-    <p class="text-danger mb-0"><strong>⚠ These keys will NOT be shown again. Store them securely!</strong></p>
+    <p class="text-danger mb-0"><strong>These keys will NOT be shown again. Store them securely.</strong></p>
 </div>
 <?php endif; ?>
 
@@ -46,7 +46,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Registered API Clients</h5>
-        <a href="<?php echo site_url('admin/api-clients/stats'); ?>" class="btn btn-sm btn-info"><i class="fas fa-chart-bar"></i> Usage Stats</a>
+        <a href="<?php echo site_url('admin'); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-shield-alt"></i> Dashboard</a>
     </div>
     <div class="card-body">
         <?php if (!empty($clients)): ?>

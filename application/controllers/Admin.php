@@ -22,6 +22,23 @@ class Admin extends MY_Admin_Controller
     }
 
     /**
+     * Admin landing page.
+     */
+    public function index()
+    {
+        $stats = $this->admin_service->get_api_usage_stats();
+        $data = array(
+            'title' => 'Dashboard',
+            'clients' => $this->admin_service->get_api_clients(),
+            'stats' => $stats
+        );
+
+        $this->load->view('layouts/header', $data);
+        $this->load->view('admin/dashboard', $data);
+        $this->load->view('layouts/footer');
+    }
+
+    /**
      * List all API clients
      */
     public function api_clients()
@@ -119,17 +136,25 @@ class Admin extends MY_Admin_Controller
     }
 
     /**
+     * View recent Alumni of the Day winners.
+     */
+    public function featured_alumni()
+    {
+        $data = array(
+            'title' => 'Last 30 Days Alumni of the Day',
+            'featured_alumni' => $this->admin_service->get_recent_featured_alumni(30)
+        );
+
+        $this->load->view('layouts/header', $data);
+        $this->load->view('admin/featured_alumni', $data);
+        $this->load->view('layouts/footer');
+    }
+
+    /**
      * API usage statistics dashboard
      */
     public function api_stats()
     {
-        $data = array(
-            'title' => 'API Usage Statistics',
-            'stats' => $this->admin_service->get_api_usage_stats()
-        );
-
-        $this->load->view('layouts/header', $data);
-        $this->load->view('admin/api_stats', $data);
-        $this->load->view('layouts/footer');
+        redirect('admin');
     }
 }

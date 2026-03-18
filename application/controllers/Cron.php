@@ -64,7 +64,7 @@ class Cron extends CI_Controller
 
         echo "[OK] Winner selected: {$name} (Alumni ID: {$result['bid']->alumni_id})\n";
         echo "     Featured date: {$result['featured_date']}\n";
-        echo "     Winning bid: Â£" . number_format($result['bid']->amount, 2) . "\n";
+        echo "     Winning bid: GBP " . number_format($result['bid']->amount, 2) . "\n";
 
         $winner_sent = $result['winner_email_sent'];
         $loser_results = $result['loser_emails'];

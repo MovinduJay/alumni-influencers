@@ -2,7 +2,7 @@
 
 Alumni Influencers Platform is a CodeIgniter 3 application for alumni identity, profile management, blind bidding, controlled API access, and university graduate-outcome analytics.
 
-The project combines a server-rendered web interface with a documented REST API. Alumni users can register, verify email addresses, manage professional profile data, participate in blind bidding for featured placement, and track sponsorships and event participation. Admin users can manage API clients and inspect API usage. External consumers can access public alumni and featured-alumni data through bearer-token protected endpoints.
+The project combines a server-rendered web interface with a documented REST API. Shared login identity lives in `users`, while alumni-only profile data lives in the `alumni` subtype table. Alumni users can register, verify email addresses, manage professional profile data, participate in blind bidding for featured placement, and track sponsorships and event participation. Admin users are `users.user_type = 'admin'` and manage analytics, API clients, and API usage without being alumni influencers. External consumers can access public alumni and featured-alumni data through bearer-token protected endpoints.
 
 ## Table of Contents
 
@@ -244,9 +244,13 @@ Optional seed data:
 
 - [`sql/seed.sql`](sql/seed.sql)
 
+Seed login accounts use `TestPass1!`. The default admin account is `admin@westminster.ac.uk`; alumni accounts include `john.doe@westminster.ac.uk` and `jane.smith@westminster.ac.uk`.
+
 The schema covers:
 
-- alumni accounts
+- shared `users` identity records
+- alumni profile subtype records
+- admin users identified by `users.user_type = 'admin'`
 - profile records
 - bids
 - featured alumni history
@@ -274,6 +278,7 @@ The schema covers:
 - `/auth/reset-password/{token}`
 - `/profile`
 - `/bidding`
+- `/admin`
 - `/analytics`
 - `/analytics/export/csv`
 - `/analytics/export/pdf`
@@ -307,6 +312,8 @@ The schema covers:
 ### Browser Users
 
 - authenticated through CodeIgniter sessions
+- alumni sessions use `users` plus the `alumni` subtype and can access profile and bidding pages
+- admin sessions use `users.user_type = 'admin'` and can access analytics and API-client management
 - protected by session timeout and regeneration rules
 - CSRF protection applied to browser form flows
 - university analytics and API-client management pages require an admin session

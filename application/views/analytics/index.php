@@ -161,6 +161,27 @@
             </section>
         </main>
     </div>
+
+    <div class="modal fade" id="save-preset-modal" tabindex="-1" aria-labelledby="save-preset-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="save-preset-form">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="save-preset-modal-title">Save Preset</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="preset-name" class="form-label">Preset name</label>
+                        <input type="text" id="preset-name" class="form-control" maxlength="80" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-bookmark"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>

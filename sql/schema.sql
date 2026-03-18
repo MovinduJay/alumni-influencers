@@ -8,17 +8,14 @@ CREATE DATABASE IF NOT EXISTS alumni_platform
 
 USE alumni_platform;
 
--- Alumni table (core user table)
-CREATE TABLE IF NOT EXISTS alumni (
+-- Shared user table for authentication and common identity fields.
+CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    bio TEXT,
-    linkedin_url VARCHAR(500),
-    profile_image VARCHAR(255),
-    role ENUM('alumni','admin') DEFAULT 'alumni',
+    user_type ENUM('alumni','admin') NOT NULL,
     email_verified TINYINT(1) DEFAULT 0,
     verification_token VARCHAR(255),
     verification_expires DATETIME,
@@ -31,6 +28,17 @@ CREATE TABLE IF NOT EXISTS alumni (
     INDEX idx_active_verified_created (is_active, email_verified, created_at),
     INDEX idx_verification_token (verification_token),
     INDEX idx_reset_token (reset_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Alumni profile subtype. id is also users.id for the alumni account.
+CREATE TABLE IF NOT EXISTS alumni (
+    id INT UNSIGNED PRIMARY KEY,
+    bio TEXT,
+    linkedin_url VARCHAR(500),
+    profile_image VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Degrees table (1:N with alumni)
@@ -166,14 +174,14 @@ CREATE TABLE IF NOT EXISTS alumni_skills (
 -- Saved dashboard filter presets for repeatable reports.
 CREATE TABLE IF NOT EXISTS analytics_filter_presets (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    alumni_id INT UNSIGNED NOT NULL,
+    admin_id INT UNSIGNED NOT NULL,
     name VARCHAR(100) NOT NULL,
     filters_json TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_preset (alumni_id, name),
-    INDEX idx_alumni_created (alumni_id, created_at)
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_admin_preset (admin_id, name),
+    INDEX idx_admin_created (admin_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Bids table (blind bidding system)

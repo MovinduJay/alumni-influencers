@@ -61,7 +61,7 @@
                 <i class="fas fa-gavel fa-3x text-warning mb-3"></i>
                 <h4>Blind Bidding</h4>
                 <p class="text-muted">Compete for the daily featured slot through our fair blind bidding system.</p>
-                <?php if ($this->session->userdata('logged_in')): ?>
+                <?php if ($this->session->userdata('user_type') === 'alumni'): ?>
                     <a href="<?php echo site_url('bidding'); ?>" class="btn btn-warning">Place a Bid</a>
                 <?php endif; ?>
             </div>

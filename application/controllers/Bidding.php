@@ -24,11 +24,12 @@ class Bidding extends MY_Authenticated_Controller
     {
         $alumni_id = $this->session->userdata('alumni_id');
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
+        $bid_month = date('Y-m', strtotime($tomorrow));
 
         $current_bid = $this->Bid_model->get_alumni_bid_for_date($alumni_id, $tomorrow);
         $is_winning = $current_bid ? $this->Bid_model->is_winning($alumni_id, $tomorrow) : FALSE;
-        $monthly_wins = $this->Bid_model->get_monthly_wins($alumni_id);
-        $max_wins = $this->Bid_model->get_max_monthly_wins($alumni_id);
+        $monthly_wins = $this->Bid_model->get_monthly_wins($alumni_id, $bid_month);
+        $max_wins = $this->Bid_model->get_max_monthly_wins($alumni_id, $bid_month);
 
         $data = array(
             'title' => 'Bidding System',
@@ -36,7 +37,7 @@ class Bidding extends MY_Authenticated_Controller
             'is_winning' => $is_winning,
             'monthly_wins' => $monthly_wins,
             'max_wins' => $max_wins,
-            'can_bid' => $this->Bid_model->can_bid($alumni_id),
+            'can_bid' => $this->Bid_model->can_bid($alumni_id, $bid_month),
             'remaining_slots' => $max_wins - $monthly_wins,
             'sponsorship_total' => $this->Bid_model->get_accepted_sponsorship_total($alumni_id),
             'sponsorships' => $this->Bid_model->get_sponsorships($alumni_id),
@@ -62,12 +63,6 @@ class Bidding extends MY_Authenticated_Controller
             return;
         }
 
-        if (!$this->Bid_model->can_bid($alumni_id)) {
-            $this->session->set_flashdata('error', 'You have reached your monthly feature limit.');
-            redirect('bidding');
-            return;
-        }
-
         $this->form_validation->set_rules('amount', 'Bid Amount', 'required|numeric|greater_than[0]');
         $this->form_validation->set_rules('bid_date', 'Bid Date', 'required|callback_validate_bid_date');
 
@@ -79,10 +74,17 @@ class Bidding extends MY_Authenticated_Controller
 
         $amount = (float) $this->input->post('amount', TRUE);
         $bid_date = $this->input->post('bid_date', TRUE);
+        $bid_month = date('Y-m', strtotime($bid_date));
         $sponsorship_total = $this->Bid_model->get_accepted_sponsorship_total($alumni_id);
 
         if (strtotime($bid_date) <= strtotime('today')) {
             $this->session->set_flashdata('error', 'You can only bid for future dates.');
+            redirect('bidding');
+            return;
+        }
+
+        if (!$this->Bid_model->can_bid($alumni_id, $bid_month)) {
+            $this->session->set_flashdata('error', 'You have reached your monthly feature limit for ' . $bid_month . '.');
             redirect('bidding');
             return;
         }
@@ -378,14 +380,8 @@ class Bidding extends MY_Authenticated_Controller
     public function select_winner()
     {
         if (!is_cli()) {
-            if ($this->session->userdata('role') !== 'admin') {
-                show_error('Access denied. Admin privileges required.', 403);
-                return;
-            }
-            if ($this->input->method() !== 'post') {
-                show_error('Method not allowed.', 405);
-                return;
-            }
+            show_error('Use the admin dashboard or CLI cron command to finalize winners.', 403);
+            return;
         }
 
         $featured_date = date('Y-m-d');

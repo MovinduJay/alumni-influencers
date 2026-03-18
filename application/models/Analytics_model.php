@@ -85,7 +85,7 @@ class Analytics_model extends CI_Model
     public function alumni_rows($filters, $limit = 500)
     {
         return $this->base_query($filters)
-            ->select('alumni.id, alumni.first_name, alumni.last_name, alumni.email, programmes.name AS programme, industry_sectors.name AS industry_sector, alumni_outcomes.graduation_date, alumni_outcomes.current_role, alumni_outcomes.current_company')
+            ->select('alumni.id, users.first_name, users.last_name, users.email, programmes.name AS programme, industry_sectors.name AS industry_sector, alumni_outcomes.graduation_date, alumni_outcomes.current_role, alumni_outcomes.current_company')
             ->group_by('alumni.id')
             ->order_by('alumni_outcomes.graduation_date', 'DESC')
             ->limit(max(1, min(1000, (int) $limit)))
@@ -193,14 +193,14 @@ class Analytics_model extends CI_Model
         return $insights;
     }
 
-    public function get_presets($alumni_id)
+    public function get_presets($admin_id)
     {
-        return $this->db->where('alumni_id', (int) $alumni_id)
+        return $this->db->where('admin_id', (int) $admin_id)
             ->order_by('updated_at', 'DESC')
             ->get('analytics_filter_presets')->result();
     }
 
-    public function save_preset($alumni_id, $name, $filters)
+    public function save_preset($admin_id, $name, $filters)
     {
         $name = trim(strip_tags((string) $name));
         if ($name === '' || strlen($name) > 100) {
@@ -208,12 +208,12 @@ class Analytics_model extends CI_Model
         }
 
         $data = array(
-            'alumni_id' => (int) $alumni_id,
+            'admin_id' => (int) $admin_id,
             'name' => $name,
             'filters_json' => json_encode($filters)
         );
 
-        $existing = $this->db->where('alumni_id', (int) $alumni_id)->where('name', $name)
+        $existing = $this->db->where('admin_id', (int) $admin_id)->where('name', $name)
             ->get('analytics_filter_presets')->row();
 
         if ($existing) {
@@ -230,13 +230,15 @@ class Analytics_model extends CI_Model
     {
         $this->db->reset_query();
         $this->db->from('alumni');
+        $this->db->join('users', 'users.id = alumni.id', 'inner');
         $this->db->join('alumni_outcomes', 'alumni_outcomes.alumni_id = alumni.id', 'inner');
         $this->db->join('programmes', 'programmes.id = alumni_outcomes.programme_id', 'inner');
         $this->db->join('industry_sectors', 'industry_sectors.id = alumni_outcomes.industry_sector_id', 'inner');
         $this->db->join('alumni_skills', 'alumni_skills.alumni_id = alumni.id', 'left');
         $this->db->join('skills', 'skills.id = alumni_skills.skill_id', 'left');
-        $this->db->where('alumni.is_active', 1);
-        $this->db->where('alumni.email_verified', 1);
+        $this->db->where('users.user_type', 'alumni');
+        $this->db->where('users.is_active', 1);
+        $this->db->where('users.email_verified', 1);
 
         if (!empty($filters['programme_id'])) {
             $this->db->where('alumni_outcomes.programme_id', (int) $filters['programme_id']);
@@ -255,8 +257,8 @@ class Analytics_model extends CI_Model
         }
         if (!empty($filters['keyword'])) {
             $this->db->group_start();
-            $this->db->like('alumni.first_name', $filters['keyword']);
-            $this->db->or_like('alumni.last_name', $filters['keyword']);
+            $this->db->like('users.first_name', $filters['keyword']);
+            $this->db->or_like('users.last_name', $filters['keyword']);
             $this->db->or_like('alumni_outcomes.current_role', $filters['keyword']);
             $this->db->or_like('alumni_outcomes.current_company', $filters['keyword']);
             $this->db->or_like('skills.name', $filters['keyword']);

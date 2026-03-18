@@ -5,9 +5,8 @@
 -- development and testing purposes.
 --
 -- Test Users:
---   1. john.doe@westminster.ac.uk    / TestPass1!  (verified, active)
---   2. jane.smith@westminster.ac.uk  / TestPass1!  (verified, active)
---   3. bob.wilson@westminster.ac.uk  / TestPass1!  (unverified)
+--   Admin: admin@westminster.ac.uk / TestPass1!
+--   Alumni: john.doe@westminster.ac.uk, jane.smith@westminster.ac.uk, etc. / TestPass1!
 --
 -- All passwords are hashed with bcrypt (cost 12).
 -- =====================================================
@@ -37,80 +36,70 @@ TRUNCATE TABLE licences;
 TRUNCATE TABLE certifications;
 TRUNCATE TABLE degrees;
 TRUNCATE TABLE alumni;
+TRUNCATE TABLE users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================
--- Alumni (Test Users)
+-- Users
 -- Password for all: TestPass1!
 -- Bcrypt hash: $2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm
 -- =====================================================
-INSERT INTO alumni (id, email, password, first_name, last_name, bio, linkedin_url, profile_image, role, email_verified, verification_token, verification_expires, is_active) VALUES
+INSERT INTO users (id, email, password, first_name, last_name, user_type, email_verified, verification_token, verification_expires, is_active) VALUES
+(100, 'admin@westminster.ac.uk',
+ '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
+ 'Admin', 'User', 'admin', 1, NULL, NULL, 1),
+
 (1, 'john.doe@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'John', 'Doe',
- 'Software engineer with 10 years of experience in full-stack development. Graduated from the University of Westminster with a First Class Honours in Computer Science. Currently leading a team at a major tech firm in London.',
- 'https://linkedin.com/in/johndoe',
- NULL, 'admin', 1, NULL, NULL, 1),
+ 'John', 'Doe', 'alumni', 1, NULL, NULL, 1),
 
 (2, 'jane.smith@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Jane', 'Smith',
- 'Data scientist and AI researcher. Passionate about using machine learning to solve real-world problems. Westminster alumna with a PhD in Artificial Intelligence.',
- 'https://linkedin.com/in/janesmith',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Jane', 'Smith', 'alumni', 1, NULL, NULL, 1),
 
 -- For Bob Wilson, verification_token is stored as SHA-256 hash.
 -- Raw token: abc123testtoken456
 -- SHA-256:   SHA2('abc123testtoken456', 256)
 (3, 'bob.wilson@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Bob', 'Wilson',
- 'Cybersecurity specialist with CISSP certification.',
- 'https://linkedin.com/in/bobwilson',
- NULL, 'alumni', 0, SHA2('abc123testtoken456', 256), DATE_ADD(NOW(), INTERVAL 24 HOUR), 1),
+ 'Bob', 'Wilson', 'alumni', 0, SHA2('abc123testtoken456', 256), DATE_ADD(NOW(), INTERVAL 24 HOUR), 1),
 
 (4, 'amina.khan@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Amina', 'Khan',
- 'Business graduate now working in analytics and product operations.',
- 'https://linkedin.com/in/aminakhan',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Amina', 'Khan', 'alumni', 1, NULL, NULL, 1),
 (5, 'liam.brown@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Liam', 'Brown',
- 'Cloud engineer focused on Kubernetes platforms and AWS migration.',
- 'https://linkedin.com/in/liambrown',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Liam', 'Brown', 'alumni', 1, NULL, NULL, 1),
 (6, 'sofia.fernandez@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Sofia', 'Fernandez',
- 'Data analyst combining SQL, Tableau, and stakeholder reporting.',
- 'https://linkedin.com/in/sofiafernandez',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Sofia', 'Fernandez', 'alumni', 1, NULL, NULL, 1),
 (7, 'ethan.chen@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Ethan', 'Chen',
- 'AI engineer building TensorFlow and Python systems.',
- 'https://linkedin.com/in/ethanchen',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Ethan', 'Chen', 'alumni', 1, NULL, NULL, 1),
 (8, 'maya.patel@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Maya', 'Patel',
- 'Cybersecurity consultant working across cloud security and governance.',
- 'https://linkedin.com/in/mayapatel',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Maya', 'Patel', 'alumni', 1, NULL, NULL, 1),
 (9, 'oliver.green@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Oliver', 'Green',
- 'Product manager using agile practices and analytics for SaaS teams.',
- 'https://linkedin.com/in/olivergreen',
- NULL, 'alumni', 1, NULL, NULL, 1),
+ 'Oliver', 'Green', 'alumni', 1, NULL, NULL, 1),
 (10, 'nora.ali@westminster.ac.uk',
  '$2y$12$ZrGB.QOE0dtogLY2GRMMcOUoZ3X8yQlAJ4eq4w3w/DIXUKyR5sWLm',
- 'Nora', 'Ali',
- 'Data science graduate working in machine learning operations.',
- 'https://linkedin.com/in/noraali',
- NULL, 'alumni', 1, NULL, NULL, 1);
+ 'Nora', 'Ali', 'alumni', 1, NULL, NULL, 1);
+
+-- =====================================================
+-- Alumni profiles
+-- =====================================================
+INSERT INTO alumni (id, bio, linkedin_url, profile_image) VALUES
+(1, 'Software engineer with 10 years of experience in full-stack development. Graduated from the University of Westminster with a First Class Honours in Computer Science. Currently leading a team at a major tech firm in London.', 'https://linkedin.com/in/johndoe', NULL),
+(2, 'Data scientist and AI researcher. Passionate about using machine learning to solve real-world problems. Westminster alumna with a PhD in Artificial Intelligence.', 'https://linkedin.com/in/janesmith', NULL),
+(3, 'Cybersecurity specialist with CISSP certification.', 'https://linkedin.com/in/bobwilson', NULL),
+(4, 'Business graduate now working in analytics and product operations.', 'https://linkedin.com/in/aminakhan', NULL),
+(5, 'Cloud engineer focused on Kubernetes platforms and AWS migration.', 'https://linkedin.com/in/liambrown', NULL),
+(6, 'Data analyst combining SQL, Tableau, and stakeholder reporting.', 'https://linkedin.com/in/sofiafernandez', NULL),
+(7, 'AI engineer building TensorFlow and Python systems.', 'https://linkedin.com/in/ethanchen', NULL),
+(8, 'Cybersecurity consultant working across cloud security and governance.', 'https://linkedin.com/in/mayapatel', NULL),
+(9, 'Product manager using agile practices and analytics for SaaS teams.', 'https://linkedin.com/in/olivergreen', NULL),
+(10, 'Data science graduate working in machine learning operations.', 'https://linkedin.com/in/noraali', NULL);
 
 -- =====================================================
 -- Degrees
@@ -325,7 +314,6 @@ INSERT INTO api_scopes (id, name) VALUES
 (8, 'alumni:write');
 
 INSERT INTO api_client_scopes (api_client_id, api_scope_id) VALUES
-(1, 1),
 (1, 2),
 (1, 4),
 (2, 1),
@@ -342,8 +330,10 @@ INSERT INTO api_access_logs (api_client_id, endpoint, method, ip_address, access
 (2, 'api/v1/featured/today', 'GET', '192.168.1.100', DATE_SUB(NOW(), INTERVAL 2 HOUR)),
 (2, 'api/v1/alumni/1', 'GET', '192.168.1.100', DATE_SUB(NOW(), INTERVAL 1 HOUR));
 
-SELECT '✓ Seed data loaded successfully!' AS status;
-SELECT CONCAT('  Alumni: ', COUNT(*)) AS info FROM alumni
+SELECT 'Seed data loaded successfully.' AS status;
+SELECT CONCAT('  Users: ', COUNT(*)) AS info FROM users
+UNION ALL
+SELECT CONCAT('  Alumni: ', COUNT(*)) FROM alumni
 UNION ALL
 SELECT CONCAT('  Degrees: ', COUNT(*)) FROM degrees
 UNION ALL

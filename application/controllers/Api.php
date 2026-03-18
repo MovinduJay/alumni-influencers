@@ -248,12 +248,32 @@ class Api extends CI_Controller
             return;
         }
 
+        if (isset($result['user_type']) && $result['user_type'] === 'admin') {
+            $admin = $result['user'];
+            $session_data = $this->auth_service->start_admin_session($admin);
+            unset($admin->password);
+
+            $this->_json_response(array(
+                'status' => 'success',
+                'message' => 'Login successful.',
+                'user_type' => 'admin',
+                'user' => $admin,
+                'session' => array(
+                    'logged_in' => TRUE,
+                    'login_time' => $session_data['login_time'],
+                    'last_activity' => $session_data['last_activity']
+                )
+            ), 200);
+            return;
+        }
+
         $alumni = $result['alumni'];
         $session_data = $this->auth_service->start_session($alumni);
         $profile = $this->Alumni_model->get_full_profile($alumni->id);
 
         $this->_json_response(array(
             'status' => 'success',
+            'user_type' => 'alumni',
             'message' => 'Login successful.',
             'user' => $this->auth_service->session_user_payload($profile['alumni']),
             'session' => array(
@@ -276,10 +296,38 @@ class Api extends CI_Controller
             return;
         }
 
-        if (!$this->session->userdata('logged_in') || !$this->session->userdata('alumni_id')) {
+        if (!$this->session->userdata('logged_in')) {
             $this->_json_response(array(
                 'error' => 'Unauthorized',
                 'message' => 'No authenticated session.'
+            ), 401);
+            return;
+        }
+
+        if ($this->session->userdata('user_type') === 'admin') {
+            $this->load->model('Admin_model');
+            $admin = $this->Admin_model->find_active_by_id((int) $this->session->userdata('admin_id'));
+            if (!$admin) {
+                $this->session->sess_destroy();
+                $this->_json_response(array(
+                    'error' => 'Unauthorized',
+                    'message' => 'Session admin no longer exists.'
+                ), 401);
+                return;
+            }
+            unset($admin->password);
+            $this->_json_response(array(
+                'status' => 'success',
+                'user_type' => 'admin',
+                'user' => $admin
+            ), 200);
+            return;
+        }
+
+        if (!$this->session->userdata('alumni_id')) {
+            $this->_json_response(array(
+                'error' => 'Unauthorized',
+                'message' => 'No authenticated alumni session.'
             ), 401);
             return;
         }
@@ -296,6 +344,7 @@ class Api extends CI_Controller
 
         $this->_json_response(array(
             'status' => 'success',
+            'user_type' => 'alumni',
             'user' => $this->auth_service->session_user_payload($profile['alumni'])
         ), 200);
     }
@@ -740,9 +789,10 @@ class Api extends CI_Controller
         }
 
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
+        $bid_month = date('Y-m', strtotime($tomorrow));
         $current_bid = $this->Bid_model->get_alumni_bid_for_date($alumni_id, $tomorrow);
-        $monthly_wins = $this->Bid_model->get_monthly_wins($alumni_id);
-        $max_wins = $this->Bid_model->get_max_monthly_wins($alumni_id);
+        $monthly_wins = $this->Bid_model->get_monthly_wins($alumni_id, $bid_month);
+        $max_wins = $this->Bid_model->get_max_monthly_wins($alumni_id, $bid_month);
 
         $this->_json_response(array(
             'status' => 'success',
@@ -751,7 +801,7 @@ class Api extends CI_Controller
                 'is_winning' => $current_bid ? $this->Bid_model->is_winning($alumni_id, $tomorrow) : FALSE,
                 'monthly_wins' => $monthly_wins,
                 'max_wins' => $max_wins,
-                'can_bid' => $this->Bid_model->can_bid($alumni_id),
+                'can_bid' => $this->Bid_model->can_bid($alumni_id, $bid_month),
                 'remaining_slots' => $max_wins - $monthly_wins,
                 'sponsorship_total' => $this->Bid_model->get_accepted_sponsorship_total($alumni_id),
                 'sponsorships' => $this->Bid_model->get_sponsorships($alumni_id),
@@ -1224,10 +1274,10 @@ class Api extends CI_Controller
             return FALSE;
         }
 
-        // Default to full read scopes for any legacy client rows without assignments.
+        // Use the configured default for legacy client rows without assignments.
         $this->api_scopes = !empty($this->api_client->scopes)
             ? $this->api_client->scopes
-            : array('read:alumni_of_day', 'read:alumni', 'read:analytics');
+            : $this->Api_client_model->scope_string_to_array(getenv('DEFAULT_API_SCOPE') ?: 'read:alumni,read:analytics');
 
         $this->Api_client_model->log_access(
             $this->api_client->id,
@@ -1713,6 +1763,7 @@ class Api extends CI_Controller
         $public_profile = $profile['alumni'];
         unset($public_profile->email);
         unset($public_profile->role);
+        unset($public_profile->user_type);
 
         $full_fields = array(
             'degrees' => $profile['degrees'],
@@ -1851,7 +1902,7 @@ class Api extends CI_Controller
     private function _require_session_auth()
     {
         $alumni_id = (int)$this->session->userdata('alumni_id');
-        if (!$this->session->userdata('logged_in') || $alumni_id <= 0) {
+        if (!$this->session->userdata('logged_in') || $this->session->userdata('user_type') !== 'alumni' || $alumni_id <= 0) {
             $this->_json_response(array(
                 'error' => 'Unauthorized',
                 'message' => 'Session login required.'
@@ -1869,12 +1920,7 @@ class Api extends CI_Controller
      */
     private function _require_admin_session()
     {
-        $alumni_id = $this->_require_session_auth();
-        if (!$alumni_id) {
-            return FALSE;
-        }
-
-        if ($this->session->userdata('role') !== 'admin') {
+        if (!$this->session->userdata('logged_in') || $this->session->userdata('user_type') !== 'admin' || (int)$this->session->userdata('admin_id') <= 0) {
             $this->_json_response(array('error' => 'Forbidden', 'message' => 'Admin privileges required.'), 403);
             return FALSE;
         }
@@ -2002,8 +2048,9 @@ class Api extends CI_Controller
             return 'You can only bid for future dates.';
         }
 
-        if (!$this->Bid_model->can_bid($alumni_id)) {
-            return 'You have reached your monthly feature limit.';
+        $bid_month = date('Y-m', strtotime($payload['bid_date']));
+        if (!$this->Bid_model->can_bid($alumni_id, $bid_month)) {
+            return 'You have reached your monthly feature limit for ' . $bid_month . '.';
         }
 
         $sponsorship_total = $this->Bid_model->get_accepted_sponsorship_total($alumni_id);

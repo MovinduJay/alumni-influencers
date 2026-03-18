@@ -21,7 +21,7 @@ class Analytics extends MY_Admin_Controller
         $data = array(
             'title' => 'University Analytics',
             'options' => $this->Analytics_model->filter_options(),
-            'presets' => $this->Analytics_model->get_presets((int) $this->session->userdata('alumni_id')),
+            'presets' => $this->Analytics_model->get_presets((int) $this->session->userdata('admin_id')),
             'analytics_token' => getenv('ANALYTICS_DASHBOARD_TOKEN') ?: 'test-bearer-token-12345',
             'csrf_name' => $this->security->get_csrf_token_name(),
             'csrf_hash' => $this->security->get_csrf_hash()
@@ -38,7 +38,7 @@ class Analytics extends MY_Admin_Controller
             ->set_content_type('application/json')
             ->set_output(json_encode(array(
                 'status' => 'success',
-                'presets' => $this->Analytics_model->get_presets((int) $this->session->userdata('alumni_id'))
+                'presets' => $this->Analytics_model->get_presets((int) $this->session->userdata('admin_id'))
             )));
     }
 
@@ -72,7 +72,7 @@ class Analytics extends MY_Admin_Controller
         );
         $filters = $this->Analytics_model->normalize_filters($payload);
         $saved = $this->Analytics_model->save_preset(
-            (int) $this->session->userdata('alumni_id'),
+            (int) $this->session->userdata('admin_id'),
             $this->input->post('name', TRUE),
             $filters
         );

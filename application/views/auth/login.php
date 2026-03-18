@@ -2,7 +2,7 @@
     <div class="col-md-5">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="fas fa-sign-in-alt"></i> Alumni Login</h4>
+                <h4 class="mb-0"><i class="fas fa-sign-in-alt"></i> Sign In</h4>
             </div>
             <div class="card-body">
                 <?php echo form_open('auth/login'); ?>
@@ -34,7 +34,7 @@
                     <a href="<?php echo site_url('auth/forgot-password'); ?>">Forgot your password?</a>
                 </p>
                 <p class="text-center mb-0">
-                    Don't have an account? <a href="<?php echo site_url('auth/register'); ?>">Register here</a>
+                    Alumni account needed? <a href="<?php echo site_url('auth/register'); ?>">Register here</a>
                 </p>
             </div>
         </div>
