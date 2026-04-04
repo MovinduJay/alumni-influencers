@@ -31,7 +31,7 @@ class SecurityHeaders
 
         // Content Security Policy — 'unsafe-inline' remains in style-src for
         // Bootstrap 5 inline style attributes from CDN; script-src uses strict allowlist only.
-        $CI->output->set_header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'sha256-+GhuR9N0hemzdPjFXU+5bdL9zc2DFZlacsPtdOhz4MI='; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; frame-ancestors 'none';");
+        $CI->output->set_header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'sha256-+GhuR9N0hemzdPjFXU+5bdL9zc2DFZlacsPtdOhz4MI=' 'sha256-r/8zIMslx8vWlg9h8Hg+ygUXPd1Lyauf127yfXOUx/4='; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; frame-ancestors 'none';");
 
         // Strict Transport Security — only send when the request arrived over HTTPS
         if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')

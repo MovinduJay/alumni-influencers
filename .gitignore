@@ -31,5 +31,12 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 /tests/tests/
 /tests/results/
 
+# Upload files (keep directories)
+uploads/profile_images/*
 
-/vendor/
+# Environment file
+.env
+
+# PHPUnit cache
+.phpunit.result.cache
+tests/.phpunit.result.cache
