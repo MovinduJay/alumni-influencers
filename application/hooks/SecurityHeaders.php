@@ -49,7 +49,8 @@ class SecurityHeaders
             $allowed_origin = getenv('CORS_ALLOWED_ORIGIN') ?: 'https://localhost';
             $CI->output->set_header('Access-Control-Allow-Origin: ' . $allowed_origin);
             $CI->output->set_header('Vary: Origin');
-            $CI->output->set_header('Access-Control-Allow-Methods: GET, OPTIONS');
+            $CI->output->set_header('Access-Control-Allow-Credentials: true');
+            $CI->output->set_header('Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS');
             $CI->output->set_header('Access-Control-Allow-Headers: Authorization, Content-Type');
             $CI->output->set_header('Access-Control-Max-Age: 86400');
         }
