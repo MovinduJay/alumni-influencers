@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS alumni (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
+    INDEX idx_active_verified_created (is_active, email_verified, created_at),
     INDEX idx_verification_token (verification_token),
     INDEX idx_reset_token (reset_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -42,7 +43,8 @@ CREATE TABLE IF NOT EXISTS degrees (
     completion_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_completion_date (alumni_id, completion_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Certifications table (1:N with alumni)
@@ -55,7 +57,8 @@ CREATE TABLE IF NOT EXISTS certifications (
     completion_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_completion_date (alumni_id, completion_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Licences table (1:N with alumni)
@@ -68,7 +71,8 @@ CREATE TABLE IF NOT EXISTS licences (
     completion_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_completion_date (alumni_id, completion_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Professional courses table (1:N with alumni)
@@ -81,7 +85,8 @@ CREATE TABLE IF NOT EXISTS courses (
     completion_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_completion_date (alumni_id, completion_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Employment history table (1:N with alumni)
@@ -94,7 +99,8 @@ CREATE TABLE IF NOT EXISTS employment_history (
     end_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_start_date (alumni_id, start_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Bids table (blind bidding system)
@@ -148,7 +154,8 @@ CREATE TABLE IF NOT EXISTS api_clients (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_api_key (api_key),
-    INDEX idx_bearer_token (bearer_token)
+    INDEX idx_bearer_token (bearer_token),
+    INDEX idx_active_bearer_token (is_active, bearer_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- API scopes catalog
@@ -181,7 +188,8 @@ CREATE TABLE IF NOT EXISTS api_access_logs (
     FOREIGN KEY (api_client_id) REFERENCES api_clients(id) ON DELETE CASCADE,
     INDEX idx_api_client_id (api_client_id),
     INDEX idx_access_time (access_time),
-    INDEX idx_client_access_time (api_client_id, access_time)
+    INDEX idx_client_access_time (api_client_id, access_time),
+    INDEX idx_endpoint_access_time (endpoint(191), access_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Sponsorships table
@@ -193,7 +201,8 @@ CREATE TABLE IF NOT EXISTS sponsorships (
     status ENUM('pending','accepted','rejected') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
-    INDEX idx_alumni_id (alumni_id)
+    INDEX idx_alumni_id (alumni_id),
+    INDEX idx_alumni_status_created (alumni_id, status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Rate limits table (IP-based rate limiting for auth endpoints)
@@ -203,5 +212,6 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     action VARCHAR(50) NOT NULL,
     attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_ip_action (ip_address, action),
-    INDEX idx_attempted_at (attempted_at)
+    INDEX idx_attempted_at (attempted_at),
+    INDEX idx_ip_action_attempted_at (ip_address, action, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
