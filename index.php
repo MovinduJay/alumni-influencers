@@ -50,16 +50,16 @@
 	if (is_file($dotenv_path)) {
 		$lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 		foreach ($lines as $line) {
-			// Skip comments
+			// Skip comment lines
 			if (strpos(trim($line), '#') === 0) {
 				continue;
 			}
-			// Only process lines with an = sign
+			// Process key/value lines only
 			if (strpos($line, '=') !== false) {
 				list($key, $value) = explode('=', $line, 2);
 				$key   = trim($key);
 				$value = trim($value);
-				// Do not overwrite existing env vars (server-level takes precedence)
+				// Preserve server-level environment variables when already defined
 				if (!getenv($key)) {
 					putenv("{$key}={$value}");
 					$_ENV[$key]    = $value;
