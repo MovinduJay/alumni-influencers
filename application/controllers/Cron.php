@@ -8,8 +8,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Intended to be called via system cron jobs.
  *
  * Usage (crontab):
- *   # Finalize tomorrow's featured alumnus after today's bidding window closes
- *   5 18 * * * /usr/bin/php /path/to/index.php cron select_winner
+ *   # Finalize today's featured alumnus just after midnight
+ *   5 0 * * * /usr/bin/php /path/to/index.php cron select_winner
  *
  * Manual usage:
  *   php index.php cron select_winner
@@ -34,14 +34,14 @@ class Cron extends CI_Controller
     /**
      * Select featured alumni for a target date.
      *
-     * Defaults to tomorrow when no date is provided.
+     * Defaults to today when no date is provided.
      *
      * @param string|null $featured_date
      */
     public function select_winner($featured_date = NULL)
     {
         if ($featured_date === NULL || $featured_date === '') {
-            $featured_date = date('Y-m-d', strtotime('+1 day'));
+            $featured_date = date('Y-m-d');
         } else {
             $dt = DateTime::createFromFormat('Y-m-d', (string) $featured_date);
             if (!$dt || $dt->format('Y-m-d') !== $featured_date) {

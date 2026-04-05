@@ -66,12 +66,15 @@ class Api extends CI_Controller
         'admin_api_clients',
         'admin_api_client_item',
         'admin_api_client_logs',
-        'admin_api_stats'
+        'admin_api_stats',
+        'admin_select_winner'
     );
 
     public function __construct()
     {
         parent::__construct();
+        $this->load->library('auth_service');
+        $this->load->library('admin_service');
         $this->load->model('Api_client_model');
         $this->load->model('Alumni_model');
         $this->load->model('Profile_model');
@@ -102,61 +105,32 @@ class Api extends CI_Controller
             return;
         }
 
-        if (!$this->_check_rate_limit('register')) {
+        if (!$this->auth_service->check_rate_limit('register')) {
             $this->_json_response(array('error' => 'Too many requests', 'message' => 'Please try again later.'), 429);
             return;
         }
 
         $payload = $this->_request_payload();
-        $validation = $this->_validate_registration_payload($payload);
+        $validation = $this->auth_service->validate_registration_payload($payload);
         if ($validation !== TRUE) {
             $this->_json_response(array('error' => 'Validation failed', 'message' => $validation), 422);
             return;
         }
 
-        $email = trim($payload['email']);
-        $email_domain = substr(strrchr($email, '@'), 1);
-        $university_domain = getenv('UNIVERSITY_DOMAIN') ?: 'my.westminster.ac.uk';
-        if ($email_domain !== $university_domain) {
+        $result = $this->auth_service->register_alumni($payload);
+        if (!$result['ok']) {
             $this->_json_response(array(
-                'error' => 'Validation failed',
-                'message' => 'Registration is restricted to @' . $university_domain . ' email addresses.'
-            ), 422);
+                'error' => $result['error'],
+                'message' => $result['message']
+            ), $result['status']);
             return;
         }
 
-        if ($this->Alumni_model->email_exists($email)) {
-            $this->_json_response(array(
-                'error' => 'Conflict',
-                'message' => 'An account with this email already exists.'
-            ), 409);
-            return;
-        }
-
-        $verification_token = bin2hex(random_bytes(32));
-        $expiry_hours = getenv('VERIFICATION_TOKEN_EXPIRY') ?: 24;
-        $alumni_id = $this->Alumni_model->create(array(
-            'email' => $email,
-            'password' => password_hash($payload['password'], PASSWORD_BCRYPT, array('cost' => 12)),
-            'first_name' => trim($payload['first_name']),
-            'last_name' => trim($payload['last_name']),
-            'email_verified' => 0,
-            'verification_token' => hash('sha256', $verification_token),
-            'verification_expires' => date('Y-m-d H:i:s', strtotime("+{$expiry_hours} hours")),
-            'is_active' => 1
-        ));
-
-        if (!$alumni_id) {
-            $this->_json_response(array('error' => 'Server error', 'message' => 'Registration failed.'), 500);
-            return;
-        }
-
-        $this->_send_verification_email($email, $verification_token);
         $response = array(
             'status' => 'created',
-            'message' => 'Registration successful. Please verify your email.'
+            'message' => $result['message']
         );
-        $response = array_merge($response, $this->_debug_token_payload('verification', $verification_token));
+        $response = array_merge($response, $this->auth_service->debug_token_payload('verification', $result['verification_token']));
         $this->_json_response($response, 201);
     }
 
@@ -173,24 +147,12 @@ class Api extends CI_Controller
         }
 
         $payload = $this->_request_payload();
-        $token = isset($payload['token']) ? trim((string)$payload['token']) : '';
-        if ($token === '') {
-            $this->_json_response(array('error' => 'Validation failed', 'message' => 'token is required.'), 422);
+        $result = $this->auth_service->verify_email_token(isset($payload['token']) ? $payload['token'] : '');
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
             return;
         }
 
-        $alumni = $this->Alumni_model->find_by_verification_token(hash('sha256', $token));
-        if (!$alumni) {
-            $this->_json_response(array('error' => 'Invalid token', 'message' => 'Invalid or expired verification link.'), 404);
-            return;
-        }
-
-        if (strtotime($alumni->verification_expires) < time()) {
-            $this->_json_response(array('error' => 'Expired token', 'message' => 'Verification link has expired.'), 410);
-            return;
-        }
-
-        $this->Alumni_model->verify_email($alumni->id);
         $this->_json_response(array('status' => 'success', 'message' => 'Email verified successfully.'), 200);
     }
 
@@ -206,31 +168,24 @@ class Api extends CI_Controller
             return;
         }
 
-        if (!$this->_check_rate_limit('forgot_password')) {
+        if (!$this->auth_service->check_rate_limit('forgot_password')) {
             $this->_json_response(array('error' => 'Too many requests', 'message' => 'Please try again later.'), 429);
             return;
         }
 
         $payload = $this->_request_payload();
-        $email = isset($payload['email']) ? trim((string)$payload['email']) : '';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->_json_response(array('error' => 'Validation failed', 'message' => 'Email must be valid.'), 422);
+        $result = $this->auth_service->request_password_reset(isset($payload['email']) ? $payload['email'] : '');
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
             return;
         }
 
         $response = array(
             'status' => 'success',
-            'message' => 'If an account with that email exists, a password reset link has been sent.'
+            'message' => $result['message']
         );
-
-        $alumni = $this->Alumni_model->find_by_email($email);
-        if ($alumni) {
-            $reset_token = bin2hex(random_bytes(32));
-            $expiry_hours = getenv('RESET_TOKEN_EXPIRY') ?: 1;
-            $expires = date('Y-m-d H:i:s', strtotime("+{$expiry_hours} hours"));
-            $this->Alumni_model->set_reset_token($alumni->id, hash('sha256', $reset_token), $expires);
-            $this->_send_reset_email($email, $reset_token);
-            $response = array_merge($response, $this->_debug_token_payload('reset', $reset_token));
+        if (!empty($result['reset_token'])) {
+            $response = array_merge($response, $this->auth_service->debug_token_payload('reset', $result['reset_token']));
         }
 
         $this->_json_response($response, 200);
@@ -249,38 +204,16 @@ class Api extends CI_Controller
         }
 
         $payload = $this->_request_payload();
-        $token = isset($payload['token']) ? trim((string)$payload['token']) : '';
-        $password = isset($payload['password']) ? (string)$payload['password'] : '';
-        $confirm = isset($payload['confirm_password']) ? (string)$payload['confirm_password'] : '';
-
-        if ($token === '' || $password === '' || $confirm === '') {
-            $this->_json_response(array('error' => 'Validation failed', 'message' => 'token, password, and confirm_password are required.'), 422);
+        $result = $this->auth_service->reset_password(
+            isset($payload['token']) ? $payload['token'] : '',
+            isset($payload['password']) ? $payload['password'] : '',
+            isset($payload['confirm_password']) ? $payload['confirm_password'] : ''
+        );
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
             return;
         }
 
-        if ($password !== $confirm) {
-            $this->_json_response(array('error' => 'Validation failed', 'message' => 'confirm_password must match password.'), 422);
-            return;
-        }
-
-        $strength = $this->_validate_password_strength_value($password);
-        if ($strength !== TRUE) {
-            $this->_json_response(array('error' => 'Validation failed', 'message' => $strength), 422);
-            return;
-        }
-
-        $alumni = $this->Alumni_model->find_by_reset_token(hash('sha256', $token));
-        if (!$alumni) {
-            $this->_json_response(array('error' => 'Invalid token', 'message' => 'Invalid or expired reset link.'), 404);
-            return;
-        }
-
-        if (strtotime($alumni->reset_expires) < time()) {
-            $this->_json_response(array('error' => 'Expired token', 'message' => 'Reset link has expired.'), 410);
-            return;
-        }
-
-        $this->Alumni_model->update_password($alumni->id, password_hash($password, PASSWORD_BCRYPT, array('cost' => 12)));
         $this->_json_response(array('status' => 'success', 'message' => 'Password reset successfully.'), 200);
     }
 
@@ -296,67 +229,29 @@ class Api extends CI_Controller
             return;
         }
 
-        $payload = $this->_request_payload();
-        $email = isset($payload['email']) ? trim($payload['email']) : '';
-        $password = isset($payload['password']) ? (string)$payload['password'] : '';
-
-        if (!$this->_check_rate_limit('login')) {
+        if (!$this->auth_service->check_rate_limit('login')) {
             $this->_json_response(array('error' => 'Too many requests', 'message' => 'Please try again later.'), 429);
             return;
         }
 
-        if ($email === '' || $password === '') {
-            $this->_json_response(array(
-                'error' => 'Validation failed',
-                'message' => 'Email and password are required.'
-            ), 422);
+        $payload = $this->_request_payload();
+        $result = $this->auth_service->authenticate_credentials(
+            isset($payload['email']) ? $payload['email'] : '',
+            isset($payload['password']) ? $payload['password'] : ''
+        );
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
             return;
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->_json_response(array(
-                'error' => 'Validation failed',
-                'message' => 'Email must be valid.'
-            ), 422);
-            return;
-        }
-
-        $alumni = $this->Alumni_model->find_by_email($email);
-
-        if (!$alumni || !password_verify($password, $alumni->password)) {
-            $this->_json_response(array(
-                'error' => 'Unauthorized',
-                'message' => 'Invalid email or password.'
-            ), 401);
-            return;
-        }
-
-        if (!$alumni->email_verified) {
-            $this->_json_response(array(
-                'error' => 'Forbidden',
-                'message' => 'Please verify your email before logging in.'
-            ), 403);
-            return;
-        }
-
-        if (!$alumni->is_active) {
-            $this->_json_response(array(
-                'error' => 'Forbidden',
-                'message' => 'Your account has been deactivated.'
-            ), 403);
-            return;
-        }
-
-        $this->session->sess_regenerate(TRUE);
-        $session_data = $this->_build_alumni_session($alumni);
-        $this->session->set_userdata($session_data);
-
+        $alumni = $result['alumni'];
+        $session_data = $this->auth_service->start_session($alumni);
         $profile = $this->Alumni_model->get_full_profile($alumni->id);
 
         $this->_json_response(array(
             'status' => 'success',
             'message' => 'Login successful.',
-            'user' => $this->_session_user_payload($profile['alumni']),
+            'user' => $this->auth_service->session_user_payload($profile['alumni']),
             'session' => array(
                 'logged_in' => TRUE,
                 'login_time' => $session_data['login_time'],
@@ -397,7 +292,7 @@ class Api extends CI_Controller
 
         $this->_json_response(array(
             'status' => 'success',
-            'user' => $this->_session_user_payload($profile['alumni'])
+            'user' => $this->auth_service->session_user_payload($profile['alumni'])
         ), 200);
     }
 
@@ -1142,40 +1037,26 @@ class Api extends CI_Controller
         if ($method === 'get') {
             $this->_json_response(array(
                 'status' => 'success',
-                'clients' => $this->Api_client_model->get_all_clients()
+                'clients' => $this->admin_service->get_api_clients()
             ), 200);
             return;
         }
 
         if ($method === 'post') {
             $payload = $this->_request_payload();
-            $client_name = isset($payload['client_name']) ? trim((string)$payload['client_name']) : '';
-            $scope = isset($payload['scope']) ? trim((string)$payload['scope']) : '';
-            if ($client_name === '') {
-                $this->_json_response(array('error' => 'Validation failed', 'message' => 'client_name is required.'), 422);
-                return;
-            }
-
-            if ($scope === '') {
-                $scope = getenv('DEFAULT_API_SCOPE') ?: 'featured:read,alumni:read';
-            }
-
-            $normalized_scope = $this->Api_client_model->normalize_scope($scope);
-            if (!$this->Api_client_model->is_allowed_scope_set($normalized_scope)) {
-                $this->_json_response(array('error' => 'Validation failed', 'message' => 'Invalid scope selection.'), 422);
-                return;
-            }
-
-            $result = $this->Api_client_model->create_client($client_name, $normalized_scope);
-            if (empty($result)) {
-                $this->_json_response(array('error' => 'Server error', 'message' => 'Failed to create API client.'), 500);
+            $result = $this->admin_service->create_api_client(
+                isset($payload['client_name']) ? $payload['client_name'] : '',
+                isset($payload['scope']) ? $payload['scope'] : ''
+            );
+            if (!$result['ok']) {
+                $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
                 return;
             }
 
             $this->_json_response(array(
                 'status' => 'created',
-                'message' => 'API client created successfully. Store the keys securely.',
-                'client' => $result
+                'message' => $result['message'],
+                'client' => $result['client']
             ), 201);
             return;
         }
@@ -1209,21 +1090,16 @@ class Api extends CI_Controller
             return;
         }
 
-        $ok = $is_active
-            ? $this->Api_client_model->activate_client($id)
-            : $this->Api_client_model->revoke_client($id);
-
-        if (!$ok) {
-            $this->_json_response(array('error' => 'Server error', 'message' => 'Failed to update API client.'), 500);
+        $result = $this->admin_service->set_api_client_active($id, $is_active);
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
             return;
         }
 
-        $clients = $this->Api_client_model->get_all_clients();
-        $client = $this->_find_owned_record($clients, $id);
         $this->_json_response(array(
             'status' => 'success',
-            'message' => $is_active ? 'API client activated.' : 'API client revoked.',
-            'client' => $client
+            'message' => $result['message'],
+            'client' => $result['client']
         ), 200);
     }
 
@@ -1243,7 +1119,7 @@ class Api extends CI_Controller
 
         $this->_json_response(array(
             'status' => 'success',
-            'logs' => $this->Api_client_model->get_client_logs($id)
+            'logs' => $this->admin_service->get_api_client_logs($id)
         ), 200);
     }
 
@@ -1263,7 +1139,56 @@ class Api extends CI_Controller
 
         $this->_json_response(array(
             'status' => 'success',
-            'stats' => $this->Api_client_model->get_usage_stats()
+            'stats' => $this->admin_service->get_api_usage_stats()
+        ), 200);
+    }
+
+    /**
+     * Manually trigger featured alumni winner selection from a session-authenticated admin API call.
+     *
+     * POST /api/v1/admin/select-winner
+     */
+    public function admin_select_winner()
+    {
+        $this->_require_admin_session() || exit;
+
+        if ($this->input->method() !== 'post') {
+            $this->_json_response(array('error' => 'Method not allowed'), 405);
+            return;
+        }
+
+        $payload = $this->_request_payload();
+        $result = $this->admin_service->select_winner(isset($payload['featured_date']) ? $payload['featured_date'] : '');
+        if (!$result['ok']) {
+            $this->_json_response(array('error' => $result['error'], 'message' => $result['message']), $result['status']);
+            return;
+        }
+
+        if ($result['state'] !== 'selected') {
+            $this->_json_response(array(
+                'status' => 'noop',
+                'message' => $result['message'],
+                'featured_date' => $result['featured_date']
+            ), 200);
+            return;
+        }
+
+        $selection = $result['result'];
+        $winner = $selection['winner'];
+        $this->_json_response(array(
+            'status' => 'success',
+            'message' => 'Winner selected successfully.',
+            'featured_date' => $selection['featured_date'],
+            'winner' => array(
+                'id' => $winner ? (int)$winner->id : NULL,
+                'first_name' => $winner ? $winner->first_name : NULL,
+                'last_name' => $winner ? $winner->last_name : NULL
+            ),
+            'bid' => $selection['bid'],
+            'notifications' => array(
+                'winner_email_sent' => $selection['winner_email_sent'],
+                'loser_emails' => $selection['loser_emails']
+            )
         ), 200);
     }
 
@@ -1598,12 +1523,12 @@ class Api extends CI_Controller
             }
 
             $alumni_id = $this->Alumni_model->create_api_alumni(array(
-                'email' => $payload['email'],
+                'email' => strtolower(trim((string)$payload['email'])),
                 'password' => password_hash($payload['password'], PASSWORD_BCRYPT, array('cost' => 12)),
-                'first_name' => $payload['first_name'],
-                'last_name' => $payload['last_name'],
-                'bio' => isset($payload['bio']) ? $payload['bio'] : NULL,
-                'linkedin_url' => isset($payload['linkedin_url']) ? $payload['linkedin_url'] : NULL,
+                'first_name' => $this->_sanitize_scalar($payload['first_name']),
+                'last_name' => $this->_sanitize_scalar($payload['last_name']),
+                'bio' => isset($payload['bio']) ? $this->_sanitize_scalar($payload['bio']) : NULL,
+                'linkedin_url' => isset($payload['linkedin_url']) ? $this->_sanitize_scalar($payload['linkedin_url']) : NULL,
                 'email_verified' => 1,
                 'is_active' => 1
             ));
@@ -1702,46 +1627,6 @@ class Api extends CI_Controller
     }
 
     /**
-     * Build canonical session data for a logged-in alumni.
-     *
-     * @param object $alumni
-     * @return array
-     */
-    private function _build_alumni_session($alumni)
-    {
-        $now = time();
-
-        return array(
-            'alumni_id' => $alumni->id,
-            'email' => $alumni->email,
-            'first_name' => $alumni->first_name,
-            'last_name' => $alumni->last_name,
-            'role' => $alumni->role ?? 'alumni',
-            'logged_in' => TRUE,
-            'login_time' => $now,
-            'last_activity' => $now
-        );
-    }
-
-    /**
-     * Strip sensitive fields from a session-authenticated user response.
-     *
-     * @param object $alumni
-     * @return object
-     */
-    private function _session_user_payload($alumni)
-    {
-        $user = clone $alumni;
-        unset($user->password);
-        unset($user->verification_token);
-        unset($user->verification_expires);
-        unset($user->reset_token);
-        unset($user->reset_expires);
-
-        return $user;
-    }
-
-    /**
      * Parse a request body as JSON or urlencoded input.
      *
      * @return array
@@ -1751,19 +1636,19 @@ class Api extends CI_Controller
         $raw = file_get_contents('php://input');
         $decoded = json_decode($raw, TRUE);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            return $decoded;
+            return $this->_sanitize_payload($decoded, array('password', 'confirm_password', 'token'));
         }
 
         if ($this->input->method() === 'post') {
             $post = $this->input->post(NULL, TRUE);
             if (is_array($post)) {
-                return $post;
+                return $this->_sanitize_payload($post, array('password', 'confirm_password', 'token'));
             }
         }
 
         $data = array();
         parse_str($raw, $data);
-        return is_array($data) ? $data : array();
+        return is_array($data) ? $this->_sanitize_payload($data, array('password', 'confirm_password', 'token')) : array();
     }
 
     /**
@@ -1785,8 +1670,25 @@ class Api extends CI_Controller
             return 'Email must be valid.';
         }
 
-        if (strlen($payload['password']) < 8) {
-            return 'Password must be at least 8 characters.';
+        if (!$this->_valid_length($payload['email'], 5, 255)) {
+            return 'Email must be 255 characters or fewer.';
+        }
+
+        if (!$this->_valid_length($payload['first_name'], 2, 100) || !$this->_valid_length($payload['last_name'], 2, 100)) {
+            return 'first_name and last_name must be between 2 and 100 characters.';
+        }
+
+        if (!$this->_valid_alpha_numeric_spaces($payload['first_name']) || !$this->_valid_alpha_numeric_spaces($payload['last_name'])) {
+            return 'first_name and last_name may only contain letters, numbers, and spaces.';
+        }
+
+        if (isset($payload['bio']) && !$this->_valid_length($payload['bio'], 0, 2000)) {
+            return 'bio must be 2000 characters or fewer.';
+        }
+
+        $password_validation = $this->auth_service->validate_password_strength($payload['password']);
+        if ($password_validation !== TRUE) {
+            return $password_validation;
         }
 
         if (!empty($payload['linkedin_url']) && !filter_var($payload['linkedin_url'], FILTER_VALIDATE_URL)) {
@@ -1809,7 +1711,9 @@ class Api extends CI_Controller
 
         foreach ($allowed as $field) {
             if (array_key_exists($field, $payload)) {
-                $update[$field] = $payload[$field];
+                $update[$field] = is_string($payload[$field])
+                    ? $this->_sanitize_scalar($payload[$field])
+                    : $payload[$field];
             }
         }
 
@@ -1857,166 +1761,6 @@ class Api extends CI_Controller
         }
 
         return TRUE;
-    }
-
-    /**
-     * Shared rate-limit logic aligned with the UI auth controller.
-     *
-     * @param string $action
-     * @return bool
-     */
-    private function _check_rate_limit($action)
-    {
-        $max_requests = (int)(getenv('RATE_LIMIT') ?: 60);
-        $window = 60;
-
-        if (!$this->db->table_exists('rate_limits')) {
-            $key = 'rate_limit_' . $action;
-            $attempts = $this->session->userdata($key);
-            if (!is_array($attempts)) {
-                $attempts = array();
-            }
-            $cutoff_ts = time() - $window;
-            $attempts = array_filter($attempts, function ($ts) use ($cutoff_ts) {
-                return $ts > $cutoff_ts;
-            });
-            if (count($attempts) >= $max_requests) {
-                return FALSE;
-            }
-            $attempts[] = time();
-            $this->session->set_userdata($key, $attempts);
-            return TRUE;
-        }
-
-        $ip = $this->input->ip_address();
-        $cutoff = date('Y-m-d H:i:s', time() - $window);
-        if (mt_rand(1, 20) === 1) {
-            $this->db->where('attempted_at <', $cutoff);
-            $this->db->delete('rate_limits');
-        }
-
-        $this->db->where('ip_address', $ip);
-        $this->db->where('action', $action);
-        $this->db->where('attempted_at >=', $cutoff);
-        $count = $this->db->count_all_results('rate_limits');
-        if ($count >= $max_requests) {
-            return FALSE;
-        }
-
-        $this->db->insert('rate_limits', array(
-            'ip_address' => $ip,
-            'action' => $action
-        ));
-        return TRUE;
-    }
-
-    private function _validate_registration_payload($payload)
-    {
-        foreach (array('first_name', 'last_name', 'email', 'password', 'confirm_password') as $field) {
-            if (empty($payload[$field])) {
-                return 'Missing required field: ' . $field;
-            }
-        }
-
-        if (!$this->_valid_length($payload['first_name'], 2, 100) || !$this->_valid_length($payload['last_name'], 2, 100)) {
-            return 'first_name and last_name must be between 2 and 100 characters.';
-        }
-
-        if (!$this->_valid_alpha_numeric_spaces($payload['first_name']) || !$this->_valid_alpha_numeric_spaces($payload['last_name'])) {
-            return 'first_name and last_name may only contain letters, numbers, and spaces.';
-        }
-
-        if (!filter_var($payload['email'], FILTER_VALIDATE_EMAIL) || strlen((string)$payload['email']) > 255) {
-            return 'email must be valid and 255 characters or fewer.';
-        }
-
-        if ($payload['password'] !== $payload['confirm_password']) {
-            return 'confirm_password must match password.';
-        }
-
-        return $this->_validate_password_strength_value($payload['password']);
-    }
-
-    private function _validate_password_strength_value($password)
-    {
-        if (strlen($password) < 8) {
-            return 'Password must be at least 8 characters.';
-        }
-        if (!preg_match('/[A-Z]/', $password)) {
-            return 'Password must contain at least one uppercase letter.';
-        }
-        if (!preg_match('/[a-z]/', $password)) {
-            return 'Password must contain at least one lowercase letter.';
-        }
-        if (!preg_match('/[0-9]/', $password)) {
-            return 'Password must contain at least one number.';
-        }
-        if (!preg_match('/[^A-Za-z0-9]/', $password)) {
-            return 'Password must contain at least one special character.';
-        }
-        return TRUE;
-    }
-
-    private function _debug_token_payload($type, $token)
-    {
-        if (!in_array((string)getenv('CI_ENV'), array('development', 'testing'), TRUE)) {
-            return array();
-        }
-
-        $path = $type === 'verification'
-            ? 'auth/verify/' . $token
-            : 'auth/reset-password/' . $token;
-
-        return array(
-            $type . '_token' => $token,
-            $type . '_url' => site_url($path)
-        );
-    }
-
-    private function _send_verification_email($email, $token)
-    {
-        $this->load->helper('email_config');
-        $this->load->library('email');
-
-        $from = get_smtp_from();
-        $this->email->initialize(get_smtp_config());
-        $this->email->from($from['email'], $from['name']);
-        $this->email->to($email);
-        $this->email->subject('Verify Your Email - Alumni Influencers Platform');
-
-        $verify_url = site_url('auth/verify/' . $token);
-        $message = '<html><body>';
-        $message .= '<h2>Welcome to the Alumni Influencers Platform!</h2>';
-        $message .= '<p>Please click the link below to verify your email address:</p>';
-        $message .= '<p><a href="' . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . '">Verify Email Address</a></p>';
-        $message .= '<p>This link will expire in 24 hours.</p>';
-        $message .= '</body></html>';
-
-        $this->email->message($message);
-        send_email_safely($this->email);
-    }
-
-    private function _send_reset_email($email, $token)
-    {
-        $this->load->helper('email_config');
-        $this->load->library('email');
-
-        $from = get_smtp_from();
-        $this->email->initialize(get_smtp_config());
-        $this->email->from($from['email'], $from['name']);
-        $this->email->to($email);
-        $this->email->subject('Password Reset - Alumni Influencers Platform');
-
-        $reset_url = site_url('auth/reset-password/' . $token);
-        $message = '<html><body>';
-        $message .= '<h2>Password Reset Request</h2>';
-        $message .= '<p>Click the link below to reset your password:</p>';
-        $message .= '<p><a href="' . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . '">Reset Password</a></p>';
-        $message .= '<p>This link will expire in 1 hour.</p>';
-        $message .= '</body></html>';
-
-        $this->email->message($message);
-        send_email_safely($this->email);
     }
 
     /**
@@ -2099,6 +1843,10 @@ class Api extends CI_Controller
             }
         }
 
+        if (!$this->_valid_length($payload['company'], 1, 255) || !$this->_valid_length($payload['position'], 1, 255)) {
+            return 'company and position must be 255 characters or fewer.';
+        }
+
         if (!$this->_valid_optional_date($payload['start_date'])) {
             return 'start_date must be a valid YYYY-MM-DD date.';
         }
@@ -2129,13 +1877,6 @@ class Api extends CI_Controller
 
         if (empty($payload['bid_date']) || !$this->_valid_optional_date($payload['bid_date'])) {
             return 'bid_date must be a valid YYYY-MM-DD date.';
-        }
-
-        $cutoff = getenv('BID_CUTOFF_TIME') ?: '18:00';
-        $now_seconds = strtotime(date('H:i'));
-        $cutoff_seconds = strtotime($cutoff);
-        if ($now_seconds !== FALSE && $cutoff_seconds !== FALSE && $now_seconds >= $cutoff_seconds) {
-            return 'Bidding for tomorrow has closed. The cutoff time is ' . $cutoff . '.';
         }
 
         if (strtotime($payload['bid_date']) <= strtotime('today')) {
@@ -2174,6 +1915,10 @@ class Api extends CI_Controller
             return 'sponsor_name is required.';
         }
 
+        if (!$this->_valid_length($payload['sponsor_name'], 1, 255)) {
+            return 'sponsor_name must be 255 characters or fewer.';
+        }
+
         if (!isset($payload['amount_offered']) || !is_numeric($payload['amount_offered']) || (float)$payload['amount_offered'] <= 0) {
             return 'amount_offered must be greater than 0.';
         }
@@ -2196,6 +1941,10 @@ class Api extends CI_Controller
     {
         if (empty($payload['event_name'])) {
             return 'event_name is required.';
+        }
+
+        if (!$this->_valid_length($payload['event_name'], 1, 255)) {
+            return 'event_name must be 255 characters or fewer.';
         }
 
         if (empty($payload['event_date']) || !$this->_valid_optional_date($payload['event_date'])) {
@@ -2279,7 +2028,7 @@ class Api extends CI_Controller
             return NULL;
         }
 
-        $value = trim((string)$payload[$field]);
+        $value = $this->_sanitize_scalar($payload[$field]);
         return $value === '' ? NULL : $value;
     }
 
@@ -2320,6 +2069,57 @@ class Api extends CI_Controller
     private function _valid_alpha_numeric_spaces($value)
     {
         return preg_match('/^[a-z0-9 ]+$/i', trim((string)$value)) === 1;
+    }
+
+    /**
+     * Recursively sanitize request payload values at the controller boundary.
+     *
+     * Passwords and opaque tokens are intentionally excluded from XSS cleaning
+     * to preserve exact values for hashing and comparison.
+     *
+     * @param mixed $value
+     * @param array $raw_fields
+     * @param string|null $field_name
+     * @return mixed
+     */
+    private function _sanitize_payload($value, $raw_fields = array(), $field_name = NULL)
+    {
+        if (is_array($value)) {
+            $clean = array();
+            foreach ($value as $key => $item) {
+                $clean[$key] = $this->_sanitize_payload($item, $raw_fields, is_string($key) ? $key : $field_name);
+            }
+            return $clean;
+        }
+
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        if ($field_name !== NULL && in_array($field_name, $raw_fields, TRUE)) {
+            return trim($value);
+        }
+
+        return $this->_sanitize_scalar($value);
+    }
+
+    /**
+     * Normalize plain-text input and strip potentially unsafe markup.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function _sanitize_scalar($value)
+    {
+        $value = trim((string)$value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+        $value = strip_tags($value);
+
+        if (isset($this->security) && is_object($this->security) && method_exists($this->security, 'xss_clean')) {
+            $value = $this->security->xss_clean($value);
+        }
+
+        return is_string($value) ? trim($value) : '';
     }
 
     /**

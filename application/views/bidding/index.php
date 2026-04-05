@@ -30,7 +30,7 @@
                         </div>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted text-center mb-0"><i class="fas fa-info-circle"></i> No featured alumni for today. The next selection will promote tomorrow's featured profile.</p>
+                    <p class="text-muted text-center mb-0"><i class="fas fa-info-circle"></i> No featured alumni for today. The next selection runs just after midnight.</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -82,7 +82,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Featured Date</label>
                                     <input type="text" class="form-control" value="<?php echo htmlspecialchars($bid_date, ENT_QUOTES, 'UTF-8'); ?>" disabled>
-                                    <small class="form-text text-muted">This bid targets tomorrow's 24-hour featured slot.</small>
+                                    <small class="form-text text-muted">This bid targets the next day's 24-hour featured slot and stays open until midnight.</small>
                                 </div>
                                 <div class="mb-3">
                                     <label for="amount" class="form-label">Bid Amount (£)</label>
@@ -115,7 +115,7 @@
                 <ul class="list-unstyled mb-0">
                     <li class="mb-2"><i class="fas fa-handshake text-secondary"></i> Sponsorship offers fund your bid. Accepted offers set your bidding ceiling.</li>
                     <li class="mb-2"><i class="fas fa-eye-slash text-primary"></i> Blind bidding hides the top amount. You only see whether you are leading.</li>
-                    <li class="mb-2"><i class="fas fa-clock text-warning"></i> Bidding closes at 6 PM. The selected winner becomes the featured alumnus for the next day.</li>
+                    <li class="mb-2"><i class="fas fa-clock text-warning"></i> Bidding stays open until midnight. Just after midnight, the highest pending bid becomes the featured alumnus for that day.</li>
                     <li class="mb-2"><i class="fas fa-calendar text-info"></i> You can win up to 3 times per month, with a 4th slot unlocked by event participation.</li>
                 </ul>
             </div>
@@ -136,7 +136,7 @@
                 <?php if ($this->session->userdata('role') === 'admin'): ?>
                     <?php echo form_open('bidding/select-winner', array('class' => 'mt-2')); ?>
                         <button type="submit" class="btn btn-outline-dark w-100">
-                            <i class="fas fa-magic"></i> Finalize Tomorrow's Winner
+                            <i class="fas fa-magic"></i> Finalize Today's Winner
                         </button>
                     <?php echo form_close(); ?>
                 <?php endif; ?>
@@ -148,7 +148,7 @@
             <div class="card-body">
                 <p class="mb-2"><strong>Sponsorship Offers:</strong> <?php echo count($sponsorships); ?></p>
                 <p class="mb-2"><strong>Recorded Alumni Events:</strong> <?php echo count($event_participations); ?></p>
-                <p class="mb-0"><strong>Tomorrow's Bid Date:</strong> <?php echo htmlspecialchars($bid_date, ENT_QUOTES, 'UTF-8'); ?></p>
+                <p class="mb-0"><strong>Next Bid Date:</strong> <?php echo htmlspecialchars($bid_date, ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
         </div>
     </div>

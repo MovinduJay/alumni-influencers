@@ -17,8 +17,8 @@ class Admin extends MY_Admin_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('Api_client_model');
-
+        $this->load->library('admin_service');
+        $this->load->library('form_validation');
     }
 
     /**
@@ -28,7 +28,7 @@ class Admin extends MY_Admin_Controller
     {
         $data = array(
             'title'   => 'API Client Management',
-            'clients' => $this->Api_client_model->get_all_clients()
+            'clients' => $this->admin_service->get_api_clients()
         );
 
         $this->load->view('layouts/header', $data);
@@ -42,7 +42,6 @@ class Admin extends MY_Admin_Controller
     public function create_client()
     {
         if ($this->input->method() === 'post') {
-            $this->load->library('form_validation');
             $this->form_validation->set_rules('client_name', 'Client Name', 'required|trim|max_length[255]');
             $this->form_validation->set_rules('scope', 'Scope', 'required|trim|callback_validate_scope');
 
@@ -54,18 +53,15 @@ class Admin extends MY_Admin_Controller
 
             $client_name = $this->input->post('client_name', TRUE);
             $scope = $this->input->post('scope', TRUE);
-            if (!$scope) {
-                $scope = getenv('DEFAULT_API_SCOPE') ?: 'featured:read,alumni:read';
-            }
-            $result = $this->Api_client_model->create_client($client_name, $scope);
-            if (empty($result)) {
-                $this->session->set_flashdata('error', 'Failed to create API client.');
+            $result = $this->admin_service->create_api_client($client_name, $scope);
+            if (!$result['ok']) {
+                $this->session->set_flashdata('error', $result['message']);
                 redirect('admin/api-clients');
                 return;
             }
 
             // Store the tokens in flash data so they can be shown once
-            $this->session->set_flashdata('new_client', $result);
+            $this->session->set_flashdata('new_client', $result['client']);
             $this->session->set_flashdata('success', 'API client created successfully. Save the keys below - they will not be shown again!');
             redirect('admin/api-clients');
         } else {
@@ -81,8 +77,8 @@ class Admin extends MY_Admin_Controller
      */
     public function validate_scope($scope)
     {
-        $scope = $this->Api_client_model->normalize_scope($scope);
-        if (!$this->Api_client_model->is_allowed_scope_set($scope)) {
+        $validation = $this->admin_service->validate_scope_selection($scope);
+        if (!$validation['ok']) {
             $this->form_validation->set_message('validate_scope', 'Invalid scope selection.');
             return FALSE;
         }
@@ -100,7 +96,7 @@ class Admin extends MY_Admin_Controller
             show_error('Method not allowed.', 405);
             return;
         }
-        $this->Api_client_model->revoke_client($client_id);
+        $this->admin_service->set_api_client_active($client_id, FALSE);
         $this->session->set_flashdata('success', 'API client access revoked.');
         redirect('admin/api-clients');
     }
@@ -114,7 +110,7 @@ class Admin extends MY_Admin_Controller
     {
         $data = array(
             'title' => 'Client Access Logs',
-            'logs'  => $this->Api_client_model->get_client_logs($client_id)
+            'logs'  => $this->admin_service->get_api_client_logs($client_id)
         );
 
         $this->load->view('layouts/header', $data);
@@ -129,7 +125,7 @@ class Admin extends MY_Admin_Controller
     {
         $data = array(
             'title' => 'API Usage Statistics',
-            'stats' => $this->Api_client_model->get_usage_stats()
+            'stats' => $this->admin_service->get_api_usage_stats()
         );
 
         $this->load->view('layouts/header', $data);

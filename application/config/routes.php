@@ -167,6 +167,7 @@ $route['api/v1/admin/api-clients'] = 'api/admin_api_clients';
 $route['api/v1/admin/api-clients/(:num)'] = 'api/admin_api_client_item/$1';
 $route['api/v1/admin/api-clients/(:num)/logs'] = 'api/admin_api_client_logs/$1';
 $route['api/v1/admin/api-stats'] = 'api/admin_api_stats';
+$route['api/v1/admin/select-winner'] = 'api/admin_select_winner';
 $route['api/v1/featured-alumni/current'] = 'api/featured_alumni_item/current';
 $route['api/v1/featured-alumni/(:any)'] = 'api/featured_alumni_item/$1';
 $route['api/v1/featured-alumni'] = 'api/featured_alumni_index';

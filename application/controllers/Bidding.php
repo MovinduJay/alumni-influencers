@@ -62,15 +62,6 @@ class Bidding extends MY_Authenticated_Controller
             return;
         }
 
-        $cutoff = getenv('BID_CUTOFF_TIME') ?: '18:00';
-        $now_seconds = strtotime(date('H:i'));
-        $cutoff_seconds = strtotime($cutoff);
-        if ($now_seconds !== FALSE && $cutoff_seconds !== FALSE && $now_seconds >= $cutoff_seconds) {
-            $this->session->set_flashdata('error', 'Bidding for tomorrow has closed. The cutoff time is ' . htmlspecialchars($cutoff, ENT_QUOTES, 'UTF-8') . '.');
-            redirect('bidding');
-            return;
-        }
-
         if (!$this->Bid_model->can_bid($alumni_id)) {
             $this->session->set_flashdata('error', 'You have reached your monthly feature limit.');
             redirect('bidding');
@@ -397,7 +388,7 @@ class Bidding extends MY_Authenticated_Controller
             }
         }
 
-        $featured_date = date('Y-m-d', strtotime('+1 day'));
+        $featured_date = date('Y-m-d');
         $result = $this->bid_winner_service->resolve_for_date($featured_date);
 
         if ($result['status'] === 'selected') {

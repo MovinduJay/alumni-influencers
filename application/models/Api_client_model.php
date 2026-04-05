@@ -115,6 +115,8 @@ class Api_client_model extends CI_Model
      */
     public function is_allowed_scope_set($scope)
     {
+        $scope = $this->normalize_scope($scope);
+
         $allowed_scopes = array(
             'featured:read',
             'alumni:read',
@@ -125,7 +127,9 @@ class Api_client_model extends CI_Model
             'featured:read,alumni:read,alumni:write'
         );
 
-        return in_array($scope, $allowed_scopes, TRUE);
+        $normalized_allowed_scopes = array_map(array($this, 'normalize_scope'), $allowed_scopes);
+
+        return in_array($scope, $normalized_allowed_scopes, TRUE);
     }
 
     /**
@@ -136,6 +140,10 @@ class Api_client_model extends CI_Model
      */
     public function get_client_scope_names($client_id)
     {
+        if (!$this->has_scope_tables()) {
+            return $this->scope_string_to_array('featured:read,alumni:read');
+        }
+
         $this->db->select('api_scopes.name');
         $this->db->from('api_client_scopes');
         $this->db->join('api_scopes', 'api_scopes.id = api_client_scopes.api_scope_id');
@@ -163,6 +171,10 @@ class Api_client_model extends CI_Model
      */
     protected function assign_scopes($client_id, $scope)
     {
+        if (!$this->has_scope_tables()) {
+            return;
+        }
+
         $scopes = $this->scope_string_to_array($scope);
         if (empty($scopes)) {
             $scopes = $this->scope_string_to_array('featured:read,alumni:read');
@@ -185,6 +197,12 @@ class Api_client_model extends CI_Model
      */
     public function get_all_clients()
     {
+        if (!$this->has_scope_tables()) {
+            $this->db->select("api_clients.id, api_clients.client_name, api_clients.is_active, api_clients.created_at, api_clients.updated_at, 'featured:read,alumni:read' AS scope", FALSE);
+            $this->db->from('api_clients');
+            return $this->db->get()->result();
+        }
+
         $this->db->select("api_clients.id, api_clients.client_name, api_clients.is_active, api_clients.created_at, api_clients.updated_at, COALESCE(GROUP_CONCAT(api_scopes.name ORDER BY api_scopes.name SEPARATOR ','), '') AS scope", FALSE);
         $this->db->from('api_clients');
         $this->db->join('api_client_scopes', 'api_client_scopes.api_client_id = api_clients.id', 'left');
@@ -258,6 +276,33 @@ class Api_client_model extends CI_Model
      */
     public function get_usage_stats()
     {
+        if (!$this->has_scope_tables()) {
+            $this->db->select("api_clients.id, api_clients.client_name, 'featured:read,alumni:read' AS scope, api_clients.is_active, COUNT(api_access_logs.id) as total_requests", FALSE);
+            $this->db->from('api_clients');
+            $this->db->join('api_access_logs', 'api_access_logs.api_client_id = api_clients.id', 'left');
+            $this->db->group_by('api_clients.id');
+            $client_stats = $this->db->get()->result();
+
+            $this->db->select('endpoint, COUNT(*) as access_count');
+            $this->db->group_by('endpoint');
+            $this->db->order_by('access_count', 'DESC');
+            $this->db->limit(10);
+            $endpoint_stats = $this->db->get('api_access_logs')->result();
+
+            $this->db->select('api_clients.client_name, api_access_logs.endpoint, api_access_logs.access_time, api_access_logs.ip_address');
+            $this->db->from('api_access_logs');
+            $this->db->join('api_clients', 'api_clients.id = api_access_logs.api_client_id');
+            $this->db->order_by('api_access_logs.access_time', 'DESC');
+            $this->db->limit(50);
+            $recent_access = $this->db->get()->result();
+
+            return array(
+                'client_stats'   => $client_stats,
+                'endpoint_stats' => $endpoint_stats,
+                'recent_access'  => $recent_access
+            );
+        }
+
         // Total requests per client
         $this->db->select("api_clients.id, api_clients.client_name, COALESCE(GROUP_CONCAT(DISTINCT api_scopes.name ORDER BY api_scopes.name SEPARATOR ','), '') AS scope, api_clients.is_active, COUNT(api_access_logs.id) as total_requests", FALSE);
         $this->db->from('api_clients');
@@ -287,5 +332,15 @@ class Api_client_model extends CI_Model
             'endpoint_stats' => $endpoint_stats,
             'recent_access'  => $recent_access
         );
+    }
+
+    /**
+     * Determine whether the normalized API scope tables exist in this database.
+     *
+     * @return bool
+     */
+    protected function has_scope_tables()
+    {
+        return $this->db->table_exists('api_scopes') && $this->db->table_exists('api_client_scopes');
     }
 }
