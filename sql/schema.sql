@@ -103,6 +103,79 @@ CREATE TABLE IF NOT EXISTS employment_history (
     INDEX idx_alumni_start_date (alumni_id, start_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Academic programmes offered by the university.
+CREATE TABLE IF NOT EXISTS programmes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    faculty VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Industry sectors used for graduate destination analytics.
+CREATE TABLE IF NOT EXISTS industry_sectors (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- One current graduate-outcome record per alumnus keeps programme/sector filters normalized.
+CREATE TABLE IF NOT EXISTS alumni_outcomes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    alumni_id INT UNSIGNED NOT NULL UNIQUE,
+    programme_id INT UNSIGNED NOT NULL,
+    industry_sector_id INT UNSIGNED NOT NULL,
+    graduation_date DATE NOT NULL,
+    current_role VARCHAR(255),
+    current_company VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
+    FOREIGN KEY (programme_id) REFERENCES programmes(id) ON DELETE RESTRICT,
+    FOREIGN KEY (industry_sector_id) REFERENCES industry_sectors(id) ON DELETE RESTRICT,
+    INDEX idx_programme_graduation (programme_id, graduation_date),
+    INDEX idx_sector_graduation (industry_sector_id, graduation_date),
+    INDEX idx_graduation_date (graduation_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Skills/technology catalog used to detect curriculum gaps from alumni profiles.
+CREATE TABLE IF NOT EXISTS skills (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    category VARCHAR(120) NOT NULL,
+    curriculum_status ENUM('covered','partial','missing') DEFAULT 'partial',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_category_status (category, curriculum_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Alumni-to-skill evidence. Source describes where the skill was observed.
+CREATE TABLE IF NOT EXISTS alumni_skills (
+    alumni_id INT UNSIGNED NOT NULL,
+    skill_id INT UNSIGNED NOT NULL,
+    source_type ENUM('certification','course','licence','employment','self_reported') NOT NULL,
+    acquired_date DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (alumni_id, skill_id, source_type),
+    FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
+    INDEX idx_skill_date (skill_id, acquired_date),
+    INDEX idx_alumni_date (alumni_id, acquired_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Saved dashboard filter presets for repeatable reports.
+CREATE TABLE IF NOT EXISTS analytics_filter_presets (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    alumni_id INT UNSIGNED NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    filters_json TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (alumni_id) REFERENCES alumni(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_preset (alumni_id, name),
+    INDEX idx_alumni_created (alumni_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Bids table (blind bidding system)
 CREATE TABLE IF NOT EXISTS bids (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

@@ -1,6 +1,6 @@
 # Alumni Influencers Platform
 
-Alumni Influencers Platform is a CodeIgniter 3 application for alumni identity, profile management, blind bidding, and controlled API access.
+Alumni Influencers Platform is a CodeIgniter 3 application for alumni identity, profile management, blind bidding, controlled API access, and university graduate-outcome analytics.
 
 The project combines a server-rendered web interface with a documented REST API. Alumni users can register, verify email addresses, manage professional profile data, participate in blind bidding for featured placement, and track sponsorships and event participation. Admin users can manage API clients and inspect API usage. External consumers can access public alumni and featured-alumni data through bearer-token protected endpoints.
 
@@ -32,6 +32,7 @@ The project combines a server-rendered web interface with a documented REST API.
 - Blind bidding workflow for featured alumni placement
 - Swagger UI and OpenAPI JSON documentation
 - Admin API-client management and access logs
+- University Analytics Dashboard with API-driven charts, filters, CSV/PDF exports, saved presets, and chart-image downloads
 
 ## Core Modules
 
@@ -61,6 +62,12 @@ The project combines a server-rendered web interface with a documented REST API.
   - client revocation
   - usage logs
   - usage statistics
+- `Analytics`
+  - admin/university-only graduate outcome dashboard
+  - programme, graduation-date, sector, skill, and keyword filters
+  - 8 interactive chart panels
+  - CSV/PDF report exports
+  - saved filter presets
 
 ### API Modules
 
@@ -71,6 +78,7 @@ The project combines a server-rendered web interface with a documented REST API.
 - `/api/v1/featured/today`
 - `/api/v1/featured-alumni/*`
 - `/api/v1/alumni/*`
+- `/api/v1/analytics/*`
 
 ## Architecture
 
@@ -84,6 +92,8 @@ The application uses a layered MVC structure:
   - server-rendered HTML pages and Swagger UI
 - `libraries`
   - reusable business services such as authentication, admin operations, and winner selection
+- `assets/js`
+  - dashboard client code that calls bearer-token protected analytics API endpoints
 - `hooks`
   - shared request-level concerns such as security headers
 
@@ -96,6 +106,7 @@ Key controllers:
 - `Api`
 - `Docs`
 - `Cron`
+- `Analytics`
 
 Key models:
 
@@ -103,6 +114,7 @@ Key models:
 - `Profile_model`
 - `Bid_model`
 - `Api_client_model`
+- `Analytics_model`
 
 Key services:
 
@@ -124,6 +136,7 @@ Key services:
 | API Auth | Bearer token validation | External API access control |
 | Documentation | Swagger UI + OpenAPI 3 | Interactive API reference |
 | Background Task | CLI cron route | Winner selection workflow |
+| Charts | Chart.js | Interactive dashboard visualizations |
 
 ## Project Layout
 
@@ -191,6 +204,7 @@ The project uses `.env` for runtime configuration.
 | --- | --- | --- | --- |
 | `CI_ENV` | Yes | Application environment | `development` |
 | `BASE_URL` | Yes | Public base URL with trailing slash | `http://localhost:8080/` |
+| `ENCRYPTION_KEY` | Yes | CodeIgniter encryption/session key; use a long random secret in production | `change-this-to-a-long-random-secret` |
 | `DB_HOST` | Yes | MySQL host | `localhost` |
 | `DB_USER` | Yes | MySQL username | `alumni_user` |
 | `DB_PASS` | Yes | MySQL password | `secret` |
@@ -209,7 +223,8 @@ The project uses `.env` for runtime configuration.
 | `RESET_TOKEN_EXPIRY` | Yes | Password reset token lifetime in hours | `1` |
 | `RATE_LIMIT` | Yes | Sensitive endpoint request cap per minute | `60` |
 | `CORS_ALLOWED_ORIGIN` | Yes | Allowed browser origin for API CORS headers | `https://localhost` |
-| `DEFAULT_API_SCOPE` | Yes | Default scope for newly created API clients | `featured:read,alumni:read` |
+| `DEFAULT_API_SCOPE` | Yes | Default scope for newly created API clients | `read:alumni,read:analytics` |
+| `ANALYTICS_DASHBOARD_TOKEN` | Yes | Bearer token used by the dashboard web client | `test-bearer-token-12345` |
 | `MAX_FEATURES_PER_MONTH` | Yes | Monthly featured-placement limit | `3` |
 | `MAX_IMAGE_SIZE` | Yes | Max upload size in KB | `2048` |
 | `MAX_IMAGE_WIDTH` | Yes | Max upload width in pixels | `4000` |
@@ -223,6 +238,7 @@ Minimum local setup usually requires valid values for database, base URL, and SM
 The database source of truth is:
 
 - [`sql/schema.sql`](sql/schema.sql)
+- [`docs/analytics-architecture.md`](docs/analytics-architecture.md)
 
 Optional seed data:
 
@@ -236,6 +252,11 @@ The schema covers:
 - featured alumni history
 - sponsorships
 - event participation
+- programmes
+- industry sectors
+- alumni outcome records
+- skills and alumni skill evidence
+- analytics filter presets
 - API clients
 - API scopes
 - API access logs
@@ -253,6 +274,9 @@ The schema covers:
 - `/auth/reset-password/{token}`
 - `/profile`
 - `/bidding`
+- `/analytics`
+- `/analytics/export/csv`
+- `/analytics/export/pdf`
 - `/admin/api-clients`
 - `/api-docs`
 
@@ -273,6 +297,10 @@ The schema covers:
 - `/api/v1/featured/today`
 - `/api/v1/featured-alumni`
 - `/api/v1/alumni`
+- `/api/v1/analytics/options`
+- `/api/v1/analytics/overview`
+- `/api/v1/analytics/alumni`
+- `/api/v1/donations/summary`
 
 ## Authentication Model
 
@@ -281,12 +309,30 @@ The schema covers:
 - authenticated through CodeIgniter sessions
 - protected by session timeout and regeneration rules
 - CSRF protection applied to browser form flows
+- university analytics and API-client management pages require an admin session
 
 ### API Clients
 
 - authenticated through bearer tokens
 - tokens validated against stored client records
 - scope-based authorization applied to protected resources
+- analytics dashboard client uses `read:alumni,read:analytics`
+- mobile AR-style client uses `read:alumni_of_day`
+- unsupported scope access returns HTTP 403 with the required scope in the JSON response
+
+Supported CW2 scopes:
+
+- `read:alumni`
+- `read:analytics`
+- `read:donations`
+- `read:alumni_of_day`
+- `write:alumni`
+
+Legacy scopes are still accepted for backward compatibility:
+
+- `alumni:read`
+- `alumni:write`
+- `featured:read`
 
 ## API Documentation
 

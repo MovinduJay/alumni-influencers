@@ -18,14 +18,14 @@ class Api_client_model extends CI_Model
      * Create a new API client with generated keys
      *
      * @param string $client_name Name of the client application
-     * @param string $scope       Comma-separated scopes (e.g., featured:read,alumni:read)
+     * @param string $scope       Comma-separated scopes (e.g., read:alumni,read:analytics)
      * @return array Client data with api_key and bearer_token
      */
-    public function create_client($client_name, $scope = 'featured:read,alumni:read')
+    public function create_client($client_name, $scope = 'read:alumni,read:analytics')
     {
         $scope = $this->normalize_scope($scope);
         if (!$this->is_allowed_scope_set($scope)) {
-            $scope = 'featured:read,alumni:read';
+            $scope = 'read:alumni,read:analytics';
         }
 
         $api_key = bin2hex(random_bytes(32));
@@ -118,6 +118,16 @@ class Api_client_model extends CI_Model
         $scope = $this->normalize_scope($scope);
 
         $allowed_scopes = array(
+            'read:alumni_of_day',
+            'read:alumni',
+            'write:alumni',
+            'read:analytics',
+            'read:donations',
+            'read:alumni,read:analytics',
+            'read:alumni_of_day,read:alumni',
+            'read:alumni_of_day,read:alumni,read:analytics',
+            'read:alumni,write:alumni',
+            'read:alumni,read:analytics,read:donations',
             'featured:read',
             'alumni:read',
             'alumni:write',
@@ -141,7 +151,7 @@ class Api_client_model extends CI_Model
     public function get_client_scope_names($client_id)
     {
         if (!$this->has_scope_tables()) {
-            return $this->scope_string_to_array('featured:read,alumni:read');
+            return $this->scope_string_to_array('read:alumni,read:analytics');
         }
 
         $this->db->select('api_scopes.name');
@@ -156,7 +166,7 @@ class Api_client_model extends CI_Model
         }, $rows);
 
         if (empty($scopes)) {
-            return $this->scope_string_to_array('featured:read,alumni:read');
+            return $this->scope_string_to_array('read:alumni,read:analytics');
         }
 
         return $scopes;
@@ -177,7 +187,7 @@ class Api_client_model extends CI_Model
 
         $scopes = $this->scope_string_to_array($scope);
         if (empty($scopes)) {
-            $scopes = $this->scope_string_to_array('featured:read,alumni:read');
+            $scopes = $this->scope_string_to_array('read:alumni,read:analytics');
         }
 
         $scope_rows = $this->db->where_in('name', $scopes)->get('api_scopes')->result();
@@ -198,7 +208,7 @@ class Api_client_model extends CI_Model
     public function get_all_clients()
     {
         if (!$this->has_scope_tables()) {
-            $this->db->select("api_clients.id, api_clients.client_name, api_clients.is_active, api_clients.created_at, api_clients.updated_at, 'featured:read,alumni:read' AS scope", FALSE);
+            $this->db->select("api_clients.id, api_clients.client_name, api_clients.is_active, api_clients.created_at, api_clients.updated_at, 'read:alumni,read:analytics' AS scope", FALSE);
             $this->db->from('api_clients');
             return $this->db->get()->result();
         }
@@ -277,7 +287,7 @@ class Api_client_model extends CI_Model
     public function get_usage_stats()
     {
         if (!$this->has_scope_tables()) {
-            $this->db->select("api_clients.id, api_clients.client_name, 'featured:read,alumni:read' AS scope, api_clients.is_active, COUNT(api_access_logs.id) as total_requests", FALSE);
+            $this->db->select("api_clients.id, api_clients.client_name, 'read:alumni,read:analytics' AS scope, api_clients.is_active, COUNT(api_access_logs.id) as total_requests", FALSE);
             $this->db->from('api_clients');
             $this->db->join('api_access_logs', 'api_access_logs.api_client_id = api_clients.id', 'left');
             $this->db->group_by('api_clients.id');

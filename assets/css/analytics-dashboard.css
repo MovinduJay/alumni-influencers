@@ -1,0 +1,254 @@
+.analytics-shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.analytics-sidebar {
+    position: sticky;
+    top: 16px;
+    background: #111827;
+    color: #fff;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.sidebar-title {
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.analytics-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #d1d5db;
+    text-decoration: none;
+    padding: 10px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.analytics-sidebar a:hover,
+.analytics-sidebar a.active {
+    background: #243044;
+    color: #fff;
+}
+
+.analytics-main {
+    min-width: 0;
+}
+
+.analytics-header,
+.filter-panel,
+.insight-panel,
+.table-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+}
+
+.analytics-header h1 {
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+}
+
+.analytics-header p,
+.section-heading span {
+    margin: 0;
+    color: #64748b;
+}
+
+.header-actions,
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.filter-grid label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.filter-grid .form-control,
+.filter-grid .form-select {
+    margin-top: 6px;
+}
+
+.filter-actions {
+    margin-top: 14px;
+}
+
+.report-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 12px;
+    color: #475569;
+    font-size: 13px;
+}
+
+.report-options span {
+    font-weight: 700;
+    color: #334155;
+}
+
+.report-options label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#preset-select {
+    max-width: 260px;
+}
+
+.loading-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #475569;
+    margin: 18px 0;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.metric-grid article {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.metric-grid span {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.metric-grid strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1;
+    margin-top: 8px;
+    color: #0f172a;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.chart-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.chart-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-card h2,
+.section-heading h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.chart-frame {
+    position: relative;
+    height: 310px;
+    margin-top: 10px;
+}
+
+.insight-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.insight {
+    border-left: 5px solid #94a3b8;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.insight.critical { border-color: #dc2626; }
+.insight.significant { border-color: #f59e0b; }
+.insight.emerging { border-color: #2563eb; }
+
+.insight strong {
+    display: block;
+    color: #0f172a;
+}
+
+.insight span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+@media (max-width: 992px) {
+    .analytics-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-sidebar {
+        position: static;
+        display: flex;
+        overflow-x: auto;
+        gap: 6px;
+    }
+
+    .sidebar-title {
+        display: none;
+    }
+
+    .analytics-sidebar a {
+        white-space: nowrap;
+    }
+
+    .analytics-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .filter-grid,
+    .metric-grid,
+    .chart-grid,
+    .insight-list {
+        grid-template-columns: 1fr;
+    }
+}

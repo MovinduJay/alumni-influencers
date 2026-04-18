@@ -24,8 +24,8 @@ class Docs extends CI_Controller
             'openapi' => '3.0.3',
             'info' => array(
                 'title' => 'Alumni Influencers Platform API',
-                'description' => 'REST API for public alumni resources, session-authenticated self-service endpoints, bidding workflows, and admin API-client management.',
-                'version' => '1.2.0'
+                'description' => 'REST API for public alumni resources, analytics dashboard intelligence, session-authenticated self-service endpoints, bidding workflows, and admin API-client management. Scopes include read:alumni, read:analytics, read:donations, read:alumni_of_day, and write:alumni.',
+                'version' => '2.0.0'
             ),
             'servers' => array(
                 array(
@@ -135,7 +135,7 @@ class Docs extends CI_Controller
                         'required' => array('client_name'),
                         'properties' => array(
                             'client_name' => array('type' => 'string'),
-                            'scope' => array('type' => 'string', 'example' => 'featured:read,alumni:read')
+                            'scope' => array('type' => 'string', 'example' => 'read:alumni,read:analytics')
                         )
                     ),
                     'ApiClientStatusUpdate' => array(
@@ -143,6 +143,17 @@ class Docs extends CI_Controller
                         'required' => array('is_active'),
                         'properties' => array(
                             'is_active' => array('type' => 'boolean')
+                        )
+                    ),
+                    'AnalyticsFilters' => array(
+                        'type' => 'object',
+                        'properties' => array(
+                            'programme_id' => array('type' => 'integer'),
+                            'industry_sector_id' => array('type' => 'integer'),
+                            'skill_id' => array('type' => 'integer'),
+                            'graduation_from' => array('type' => 'string', 'format' => 'date'),
+                            'graduation_to' => array('type' => 'string', 'format' => 'date'),
+                            'keyword' => array('type' => 'string')
                         )
                     )
                 )
@@ -176,6 +187,18 @@ class Docs extends CI_Controller
                 'get' => $this->simpleOp('Alumni', 'Get alumni profile', 'success', array('alumnus' => array('id' => 1, 'first_name' => 'John', 'last_name' => 'Smith')), array('BearerAuth' => array()), TRUE),
                 'patch' => $this->writeOp('Alumni', 'Partially update an alumni resource', '#/components/schemas/AlumniPatch', array('status' => 'success', 'message' => 'Alumni updated successfully.', 'alumni' => array('id' => 1)), array('BearerAuth' => array()), TRUE),
                 'delete' => $this->deleteOp('Alumni', 'Soft-delete an alumni resource', array('BearerAuth' => array()), TRUE)
+            ),
+            '/analytics/options' => array(
+                'get' => $this->simpleOp('Analytics', 'List programmes, industry sectors, and skills for dashboard filters. Requires read:analytics.', 'success', array('options' => array('programmes' => array(), 'industry_sectors' => array(), 'skills' => array())), array('BearerAuth' => array()))
+            ),
+            '/analytics/overview' => array(
+                'get' => $this->simpleOp('Analytics', 'Return chart-ready dashboard data from the database. Requires read:analytics.', 'success', array('analytics' => array('summary' => array('alumni_count' => 10), 'charts' => array(), 'insights' => array())), array('BearerAuth' => array()))
+            ),
+            '/analytics/alumni' => array(
+                'get' => $this->simpleOp('Analytics', 'Return filtered alumni rows for tables and exports. Requires read:alumni.', 'success', array('alumni' => array()), array('BearerAuth' => array()))
+            ),
+            '/donations/summary' => array(
+                'get' => $this->simpleOp('Donations', 'Return sponsorship funding totals by status. Requires read:donations.', 'success', array('donations' => array(array('status' => 'accepted', 'total_amount' => 450))), array('BearerAuth' => array()))
             )
         );
     }

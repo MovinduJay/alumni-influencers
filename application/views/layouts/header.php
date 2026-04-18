@@ -37,6 +37,9 @@
                         </li>
                         <?php if ($this->session->userdata('role') === 'admin'): ?>
                             <li class="nav-item">
+                                <a class="nav-link" href="<?php echo site_url('analytics'); ?>"><i class="fas fa-chart-line"></i> Analytics</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="<?php echo site_url('admin/api-clients'); ?>"><i class="fas fa-key"></i> API Clients</a>
                             </li>
                         <?php endif; ?>

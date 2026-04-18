@@ -132,6 +132,17 @@ $route['admin/api-clients/stats'] = 'admin/api_stats';
 
 /*
 | -------------------------------------------------------------------------
+| University Analytics Dashboard
+| -------------------------------------------------------------------------
+*/
+$route['analytics'] = 'analytics/index';
+$route['analytics/export/csv'] = 'analytics/export_csv';
+$route['analytics/export/pdf'] = 'analytics/export_pdf';
+$route['analytics/presets'] = 'analytics/presets';
+$route['analytics/presets/save'] = 'analytics/save_preset';
+
+/*
+| -------------------------------------------------------------------------
 | Public API Routes (Bearer Token Protected)
 | -------------------------------------------------------------------------
 */
@@ -168,6 +179,10 @@ $route['api/v1/admin/api-clients/(:num)'] = 'api/admin_api_client_item/$1';
 $route['api/v1/admin/api-clients/(:num)/logs'] = 'api/admin_api_client_logs/$1';
 $route['api/v1/admin/api-stats'] = 'api/admin_api_stats';
 $route['api/v1/admin/select-winner'] = 'api/admin_select_winner';
+$route['api/v1/analytics/options'] = 'api/analytics_options';
+$route['api/v1/analytics/overview'] = 'api/analytics_overview';
+$route['api/v1/analytics/alumni'] = 'api/analytics_alumni';
+$route['api/v1/donations/summary'] = 'api/donations_summary';
 $route['api/v1/featured-alumni/current'] = 'api/featured_alumni_item/current';
 $route['api/v1/featured-alumni/(:any)'] = 'api/featured_alumni_item/$1';
 $route['api/v1/featured-alumni'] = 'api/featured_alumni_index';

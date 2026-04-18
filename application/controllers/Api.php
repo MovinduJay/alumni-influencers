@@ -79,6 +79,7 @@ class Api extends CI_Controller
         $this->load->model('Alumni_model');
         $this->load->model('Profile_model');
         $this->load->model('Bid_model');
+        $this->load->model('Analytics_model');
 
         if ($this->input->method() === 'options') {
             $this->output->set_status_header(204)->_display();
@@ -89,7 +90,10 @@ class Api extends CI_Controller
         if (!in_array($current_method, $this->public_methods, TRUE)
             && !in_array($current_method, $this->session_methods, TRUE)
         ) {
-            $this->_authenticate();
+            if (!$this->_authenticate()) {
+                $this->output->_display();
+                exit;
+            }
         }
     }
 
@@ -1194,6 +1198,8 @@ class Api extends CI_Controller
 
     /**
      * Authenticate API request using bearer token.
+     *
+     * @return bool
      */
     private function _authenticate()
     {
@@ -1204,7 +1210,7 @@ class Api extends CI_Controller
                 'error'   => 'Unauthorized',
                 'message' => 'Bearer token required. Include Authorization: Bearer <token> header.'
             ), 401);
-            return;
+            return FALSE;
         }
 
         $token = substr($auth_header, 7);
@@ -1215,13 +1221,13 @@ class Api extends CI_Controller
                 'error'   => 'Unauthorized',
                 'message' => 'Invalid or revoked bearer token.'
             ), 401);
-            return;
+            return FALSE;
         }
 
         // Default to full read scopes for any legacy client rows without assignments.
         $this->api_scopes = !empty($this->api_client->scopes)
             ? $this->api_client->scopes
-            : array('featured:read', 'alumni:read');
+            : array('read:alumni_of_day', 'read:alumni', 'read:analytics');
 
         $this->Api_client_model->log_access(
             $this->api_client->id,
@@ -1229,6 +1235,8 @@ class Api extends CI_Controller
             $this->input->method(),
             $this->input->ip_address()
         );
+
+        return TRUE;
     }
 
     /**
@@ -1545,6 +1553,101 @@ class Api extends CI_Controller
     }
 
     /**
+     * GET /api/v1/analytics/options
+     *
+     * Dimension lists for dashboard filters.
+     */
+    public function analytics_options()
+    {
+        if ($this->input->method() !== 'get') {
+            $this->_json_response(array('error' => 'Method not allowed'), 405);
+            return;
+        }
+        if (!$this->_require_scope('read:analytics')) {
+            return;
+        }
+
+        $this->_json_response(array(
+            'status' => 'success',
+            'options' => $this->Analytics_model->filter_options()
+        ), 200);
+    }
+
+    /**
+     * GET /api/v1/analytics/overview
+     *
+     * Returns all chart-ready datasets used by the University Analytics Dashboard.
+     */
+    public function analytics_overview()
+    {
+        if ($this->input->method() !== 'get') {
+            $this->_json_response(array('error' => 'Method not allowed'), 405);
+            return;
+        }
+        if (!$this->_require_scope('read:analytics')) {
+            return;
+        }
+
+        $filters = $this->Analytics_model->normalize_filters($this->input->get(NULL, TRUE));
+        $this->_json_response(array(
+            'status' => 'success',
+            'generated_at' => date('c'),
+            'analytics' => $this->Analytics_model->dashboard_payload($filters)
+        ), 200);
+    }
+
+    /**
+     * GET /api/v1/analytics/alumni
+     *
+     * Filtered alumni list for the dashboard table and exports.
+     */
+    public function analytics_alumni()
+    {
+        if ($this->input->method() !== 'get') {
+            $this->_json_response(array('error' => 'Method not allowed'), 405);
+            return;
+        }
+        if (!$this->_require_scope('read:alumni')) {
+            return;
+        }
+
+        $filters = $this->Analytics_model->normalize_filters($this->input->get(NULL, TRUE));
+        $rows = $this->Analytics_model->alumni_rows($filters, $this->_query_int('limit', 100, 1, 1000));
+        $this->_json_response(array(
+            'status' => 'success',
+            'count' => count($rows),
+            'filters' => $filters,
+            'alumni' => $rows
+        ), 200);
+    }
+
+    /**
+     * GET /api/v1/donations/summary
+     *
+     * Sponsorship/donation-style funding summary for clients with donation scope.
+     */
+    public function donations_summary()
+    {
+        if ($this->input->method() !== 'get') {
+            $this->_json_response(array('error' => 'Method not allowed'), 405);
+            return;
+        }
+        if (!$this->_require_scope('read:donations')) {
+            return;
+        }
+
+        $this->db->select('status, COUNT(*) AS sponsorship_count, COALESCE(SUM(amount_offered), 0) AS total_amount', FALSE);
+        $this->db->from('sponsorships');
+        $this->db->group_by('status');
+        $rows = $this->db->get()->result();
+
+        $this->_json_response(array(
+            'status' => 'success',
+            'donations' => $rows
+        ), 200);
+    }
+
+    /**
      * Output a JSON response with proper headers.
      *
      * @param array $data
@@ -1571,7 +1674,23 @@ class Api extends CI_Controller
      */
     private function _require_scope($required)
     {
-        if (!in_array($required, $this->api_scopes, TRUE)) {
+        $aliases = array(
+            'featured:read' => 'read:alumni_of_day',
+            'alumni:read' => 'read:alumni',
+            'alumni:write' => 'write:alumni'
+        );
+
+        $accepted = array($required);
+        if (isset($aliases[$required])) {
+            $accepted[] = $aliases[$required];
+        }
+
+        $legacy_alias = array_search($required, $aliases, TRUE);
+        if ($legacy_alias !== FALSE) {
+            $accepted[] = $legacy_alias;
+        }
+
+        if (count(array_intersect($accepted, $this->api_scopes)) === 0) {
             $this->_json_response(array(
                 'error'   => 'Forbidden',
                 'message' => 'Insufficient token scope for this endpoint.',

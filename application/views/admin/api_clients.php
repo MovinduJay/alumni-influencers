@@ -24,13 +24,14 @@
                 </div>
                 <div class="col-md-4">
                     <select name="scope" class="form-select" required>
-                        <option value="featured:read,alumni:read">Featured + Alumni Read (Recommended)</option>
-                        <option value="featured:read,alumni:read,alumni:write">Featured Read + Alumni Read/Write</option>
-                        <option value="featured:read">Featured Read Only</option>
-                        <option value="alumni:read">Alumni Read Only</option>
-                        <option value="alumni:read,alumni:write">Alumni Read + Write</option>
-                        <option value="alumni:write">Alumni Write Only</option>
-                        <option value="featured:read,alumni:write">Featured Read + Alumni Write</option>
+                        <option value="read:alumni,read:analytics">Analytics Dashboard (Recommended)</option>
+                        <option value="read:alumni_of_day">Mobile AR App</option>
+                        <option value="read:alumni_of_day,read:alumni">AR App + Alumni Directory</option>
+                        <option value="read:alumni_of_day,read:alumni,read:analytics">Full Read Client</option>
+                        <option value="read:alumni">Alumni Read Only</option>
+                        <option value="read:analytics">Analytics Read Only</option>
+                        <option value="read:donations">Donation Read Only</option>
+                        <option value="read:alumni,write:alumni">Alumni Read/Write</option>
                     </select>
                 </div>
                 <div class="col-md-3">

@@ -202,7 +202,7 @@ class Admin_service
     {
         $scope = trim((string) $scope);
         if ($scope === '') {
-            $scope = getenv('DEFAULT_API_SCOPE') ?: 'featured:read,alumni:read';
+            $scope = getenv('DEFAULT_API_SCOPE') ?: 'read:alumni,read:analytics';
         }
 
         return $this->CI->Api_client_model->normalize_scope($scope);

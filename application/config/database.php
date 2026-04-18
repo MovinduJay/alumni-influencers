@@ -68,12 +68,49 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | make active.  By default there is only one group (the 'default' group).
 */
 $active_group = 'default';
+
+if (!function_exists('ai_env')) {
+	function ai_env($key, $default = '')
+	{
+		$value = getenv($key);
+		if ($value !== FALSE && $value !== '') {
+			return $value;
+		}
+
+		if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+			return $_ENV[$key];
+		}
+
+		if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+			return $_SERVER[$key];
+		}
+
+		$env_path = FCPATH . '.env';
+		if (is_file($env_path)) {
+			$lines = file($env_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+			foreach ($lines as $line) {
+				$line = trim($line);
+				if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === FALSE) {
+					continue;
+				}
+
+				list($env_key, $env_value) = explode('=', $line, 2);
+				if (trim($env_key) === $key) {
+					return trim($env_value);
+				}
+			}
+		}
+
+		return $default;
+	}
+}
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => getenv('DB_HOST') ?: 'localhost',
-	'username' => getenv('DB_USER') ?: 'root',
-	'password' => getenv('DB_PASS') ?: '',
-	'database' => getenv('DB_NAME') ?: 'alumni_platform',
+	'hostname' => ai_env('DB_HOST', 'localhost'),
+	'username' => ai_env('DB_USER', 'root'),
+	'password' => ai_env('DB_PASS', ''),
+	'database' => ai_env('DB_NAME', 'alumni_platform'),
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
