@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-12 mb-4">
         <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-star"></i> Alumni of the Day - <?php echo date('F j, Y'); ?></h4>
             </div>
             <div class="card-body">
@@ -38,7 +38,7 @@
 
     <div class="col-lg-7">
         <div class="card">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-gavel"></i> Bid For <?php echo htmlspecialchars($bid_date, ENT_QUOTES, 'UTF-8'); ?></h5>
             </div>
             <div class="card-body">

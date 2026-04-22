@@ -19,6 +19,22 @@
         .table th { color: #334155; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
         code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .9em; }
         .card { margin-bottom: 20px; box-shadow: 0 1px 2px rgba(15,23,42,0.08); }
+        .card-header,
+        .card-header.bg-primary,
+        .card-header.bg-success,
+        .card-header.bg-warning,
+        .card-header.bg-dark {
+            background: #0b4f4a !important;
+            color: #fff !important;
+            border-bottom: 0;
+        }
+        .card-header h1,
+        .card-header h2,
+        .card-header h3,
+        .card-header h4,
+        .card-header h5,
+        .card-header h6 { color: #fff; }
+        .border-primary { border-color: #0b4f4a !important; }
         .admin-page-title { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #d8dee6; }
         .admin-page-title h1 { font-size: 1.65rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.015em; }
         .admin-page-title p { margin: 0; color: #64748b; }
@@ -30,7 +46,7 @@
         .admin-kpi .kpi-icon { width: 34px; height: 34px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: #dcefed; color: #0b4f4a; }
         .admin-kpi .display-6 { font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; }
         .admin-panel { border: 1px solid #d8dee6; box-shadow: none; }
-        .admin-panel .card-header { background: #0b4f4a; color: #fff; padding: 12px 16px; border-bottom: 0; }
+        .admin-panel .card-header { padding: 12px 16px; }
         .admin-panel .card-header h5 { color: #fff; font-size: .98rem; font-weight: 700; }
         .admin-panel .card-header .btn { border-color: rgba(255,255,255,0.65); color: #fff; }
         .admin-panel .card-header .btn:hover { background: #fff; color: #0b4f4a; }

@@ -12,7 +12,7 @@
 <div class="row justify-content-center mb-5">
     <div class="col-md-8">
         <div class="card border-primary">
-            <div class="card-header bg-primary text-white text-center">
+            <div class="card-header text-center">
                 <h3 class="mb-0"><i class="fas fa-star"></i> Alumni of the Day - <?php echo date('F j, Y'); ?></h3>
             </div>
             <div class="card-body text-center">

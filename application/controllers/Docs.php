@@ -39,12 +39,6 @@ class Docs extends CI_Controller
                         'type' => 'http',
                         'scheme' => 'bearer',
                         'bearerFormat' => 'API Token'
-                    ),
-                    'CookieSession' => array(
-                        'type' => 'apiKey',
-                        'in' => 'cookie',
-                        'name' => 'ci_session',
-                        'description' => 'Session cookie created by /api/v1/auth/login.'
                     )
                 ),
                 'schemas' => array(
@@ -226,10 +220,10 @@ class Docs extends CI_Controller
                 'post' => $this->writeOp('Authentication', 'Create an authenticated alumni session', '#/components/schemas/LoginInput', array('status' => 'success', 'message' => 'Login successful.', 'session' => array('logged_in' => TRUE)), array(), FALSE, FALSE)
             ),
             '/auth/me' => array(
-                'get' => $this->simpleOp('Authentication', 'Return the current session user', 'success', array('user' => array('id' => 1, 'email' => 'alumni@westminster.ac.uk')), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Authentication', 'Return the current session user', 'success', array('user' => array('id' => 1, 'email' => 'alumni@westminster.ac.uk')), array())
             ),
             '/auth/logout' => array(
-                'post' => $this->simpleOp('Authentication', 'Destroy the current session', 'success', array('message' => 'Logout successful.'), array('CookieSession' => array()))
+                'post' => $this->simpleOp('Authentication', 'Destroy the current session', 'success', array('message' => 'Logout successful.'), array())
             )
         );
     }
@@ -269,8 +263,8 @@ class Docs extends CI_Controller
     {
         return array(
             '/me/profile' => array(
-                'get' => $this->simpleOp('My Profile', 'Get the authenticated alumni profile', 'success', array('profile' => array('alumni' => array('id' => 1), 'degrees' => array())), array('CookieSession' => array())),
-                'patch' => $this->writeOp('My Profile', 'Update the authenticated alumni profile', '#/components/schemas/AlumniPatch', array('status' => 'success', 'message' => 'Profile updated successfully.', 'profile' => array('alumni' => array('id' => 1))), array('CookieSession' => array()))
+                'get' => $this->simpleOp('My Profile', 'Get the authenticated alumni profile', 'success', array('profile' => array('alumni' => array('id' => 1), 'degrees' => array())), array()),
+                'patch' => $this->writeOp('My Profile', 'Update the authenticated alumni profile', '#/components/schemas/AlumniPatch', array('status' => 'success', 'message' => 'Profile updated successfully.', 'profile' => array('alumni' => array('id' => 1))), array())
             ),
             '/me/profile/image' => array('post' => $this->uploadOp()),
             '/me/degrees' => $this->crudCollection('My Profile', 'degree', 'degrees', '#/components/schemas/DegreeInput', array('title' => 'BSc Computer Science', 'institution' => 'University of Westminster')),
@@ -283,31 +277,31 @@ class Docs extends CI_Controller
             '/me/courses/{id}' => $this->crudItem('My Profile', 'course', '#/components/schemas/CourseInput'),
             '/me/employment' => $this->crudCollection('My Profile', 'employment', 'employment', '#/components/schemas/EmploymentInput', array('company' => 'Tech Corp', 'position' => 'Senior Engineer', 'start_date' => '2023-01-01')),
             '/me/employment/{id}' => $this->crudItem('My Profile', 'employment', '#/components/schemas/EmploymentInput'),
-            '/me/bidding' => array('get' => $this->simpleOp('Bidding', 'Get bidding dashboard data for the authenticated alumni', 'success', array('bidding' => array('monthly_wins' => 1, 'max_wins' => 4, 'remaining_slots' => 3)), array('CookieSession' => array()))),
+            '/me/bidding' => array('get' => $this->simpleOp('Bidding', 'Get bidding dashboard data for the authenticated alumni', 'success', array('bidding' => array('monthly_wins' => 1, 'max_wins' => 4, 'remaining_slots' => 3)), array())),
             '/me/bids' => array(
-                'get' => $this->simpleOp('Bidding', 'List bids for the authenticated alumni', 'success', array('bids' => array(array('id' => 7, 'amount' => 250.00, 'bid_date' => '2026-04-06', 'status' => 'pending'))), array('CookieSession' => array())),
-                'post' => $this->writeOp('Bidding', 'Create a new bid', '#/components/schemas/BidCreate', array('status' => 'created', 'message' => 'Bid placed successfully. You are currently in the lead!', 'bid' => array('id' => 7, 'amount' => 250.00)), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Bidding', 'List bids for the authenticated alumni', 'success', array('bids' => array(array('id' => 7, 'amount' => 250.00, 'bid_date' => '2026-04-06', 'status' => 'pending'))), array()),
+                'post' => $this->writeOp('Bidding', 'Create a new bid', '#/components/schemas/BidCreate', array('status' => 'created', 'message' => 'Bid placed successfully. You are currently in the lead!', 'bid' => array('id' => 7, 'amount' => 250.00)), array())
             ),
             '/me/bids/{id}' => array(
-                'get' => $this->simpleOp('Bidding', 'Get a bid', 'success', array('bid' => array('id' => 7, 'amount' => 250.00, 'status' => 'pending')), array('CookieSession' => array()), TRUE),
-                'patch' => $this->writeOp('Bidding', 'Increase a bid amount', '#/components/schemas/BidUpdate', array('status' => 'success', 'message' => 'Bid updated. You are now in the lead!', 'bid' => array('id' => 7, 'amount' => 300.00)), array('CookieSession' => array()), TRUE, FALSE)
+                'get' => $this->simpleOp('Bidding', 'Get a bid', 'success', array('bid' => array('id' => 7, 'amount' => 250.00, 'status' => 'pending')), array(), TRUE),
+                'patch' => $this->writeOp('Bidding', 'Increase a bid amount', '#/components/schemas/BidUpdate', array('status' => 'success', 'message' => 'Bid updated. You are now in the lead!', 'bid' => array('id' => 7, 'amount' => 300.00)), array(), TRUE, FALSE)
             ),
             '/me/sponsorships' => array(
-                'get' => $this->simpleOp('Sponsorships', 'List sponsorship offers for the authenticated alumni', 'success', array('accepted_total' => 400.00, 'sponsorships' => array(array('id' => 3, 'sponsor_name' => 'CareerCert', 'status' => 'accepted'))), array('CookieSession' => array())),
-                'post' => $this->writeOp('Sponsorships', 'Create a sponsorship offer entry', '#/components/schemas/SponsorshipCreate', array('status' => 'created', 'message' => 'Sponsorship offer saved successfully.', 'sponsorship' => array('id' => 3)), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Sponsorships', 'List sponsorship offers for the authenticated alumni', 'success', array('accepted_total' => 400.00, 'sponsorships' => array(array('id' => 3, 'sponsor_name' => 'CareerCert', 'status' => 'accepted'))), array()),
+                'post' => $this->writeOp('Sponsorships', 'Create a sponsorship offer entry', '#/components/schemas/SponsorshipCreate', array('status' => 'created', 'message' => 'Sponsorship offer saved successfully.', 'sponsorship' => array('id' => 3)), array())
             ),
             '/me/sponsorships/{id}' => array(
-                'get' => $this->simpleOp('Sponsorships', 'Get a sponsorship offer', 'success', array('sponsorship' => array('id' => 3, 'status' => 'accepted')), array('CookieSession' => array()), TRUE),
-                'patch' => $this->writeOp('Sponsorships', 'Update sponsorship status', '#/components/schemas/SponsorshipStatusUpdate', array('status' => 'success', 'message' => 'Sponsorship status updated.', 'sponsorship' => array('id' => 3, 'status' => 'rejected')), array('CookieSession' => array()), TRUE, FALSE),
-                'delete' => $this->deleteOp('Sponsorships', 'Delete a sponsorship offer', array('CookieSession' => array()), TRUE)
+                'get' => $this->simpleOp('Sponsorships', 'Get a sponsorship offer', 'success', array('sponsorship' => array('id' => 3, 'status' => 'accepted')), array(), TRUE),
+                'patch' => $this->writeOp('Sponsorships', 'Update sponsorship status', '#/components/schemas/SponsorshipStatusUpdate', array('status' => 'success', 'message' => 'Sponsorship status updated.', 'sponsorship' => array('id' => 3, 'status' => 'rejected')), array(), TRUE, FALSE),
+                'delete' => $this->deleteOp('Sponsorships', 'Delete a sponsorship offer', array(), TRUE)
             ),
             '/me/events' => array(
-                'get' => $this->simpleOp('Events', 'List event participations for the authenticated alumni', 'success', array('max_wins' => 4, 'events' => array(array('id' => 5, 'event_name' => 'Westminster Alumni Meetup'))), array('CookieSession' => array())),
-                'post' => $this->writeOp('Events', 'Record an alumni event participation', '#/components/schemas/EventCreate', array('status' => 'created', 'message' => 'Event participation recorded.', 'event' => array('id' => 5, 'event_name' => 'Westminster Alumni Meetup')), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Events', 'List event participations for the authenticated alumni', 'success', array('max_wins' => 4, 'events' => array(array('id' => 5, 'event_name' => 'Westminster Alumni Meetup'))), array()),
+                'post' => $this->writeOp('Events', 'Record an alumni event participation', '#/components/schemas/EventCreate', array('status' => 'created', 'message' => 'Event participation recorded.', 'event' => array('id' => 5, 'event_name' => 'Westminster Alumni Meetup')), array())
             ),
             '/me/events/{id}' => array(
-                'get' => $this->simpleOp('Events', 'Get an event participation record', 'success', array('event' => array('id' => 5, 'event_name' => 'Westminster Alumni Meetup')), array('CookieSession' => array()), TRUE),
-                'delete' => $this->deleteOp('Events', 'Delete an event participation record', array('CookieSession' => array()), TRUE)
+                'get' => $this->simpleOp('Events', 'Get an event participation record', 'success', array('event' => array('id' => 5, 'event_name' => 'Westminster Alumni Meetup')), array(), TRUE),
+                'delete' => $this->deleteOp('Events', 'Delete an event participation record', array(), TRUE)
             )
         );
     }
@@ -316,20 +310,20 @@ class Docs extends CI_Controller
     {
         return array(
             '/admin/api-clients' => array(
-                'get' => $this->simpleOp('Admin', 'List API clients and assigned scopes', 'success', array('clients' => array(array('id' => 1, 'client_name' => 'Analytics Dashboard', 'scope' => 'read:alumni,read:analytics'))), array('CookieSession' => array())),
-                'post' => $this->writeOp('Admin', 'Create a scoped API client', '#/components/schemas/ApiClientCreate', array('status' => 'created', 'message' => 'API client created successfully.', 'client' => array('id' => 4, 'scope' => 'read:alumni_of_day')), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Admin', 'List API clients and assigned scopes', 'success', array('clients' => array(array('id' => 1, 'client_name' => 'Analytics Dashboard', 'scope' => 'read:alumni,read:analytics'))), array()),
+                'post' => $this->writeOp('Admin', 'Create a scoped API client', '#/components/schemas/ApiClientCreate', array('status' => 'created', 'message' => 'API client created successfully.', 'client' => array('id' => 4, 'scope' => 'read:alumni_of_day')), array())
             ),
             '/admin/api-clients/{id}' => array(
-                'patch' => $this->writeOp('Admin', 'Activate or revoke an API client', '#/components/schemas/ApiClientStatusUpdate', array('status' => 'success', 'message' => 'API client revoked.', 'client' => array('id' => 1, 'is_active' => false)), array('CookieSession' => array()), TRUE, FALSE)
+                'patch' => $this->writeOp('Admin', 'Activate or revoke an API client', '#/components/schemas/ApiClientStatusUpdate', array('status' => 'success', 'message' => 'API client revoked.', 'client' => array('id' => 1, 'is_active' => false)), array(), TRUE, FALSE)
             ),
             '/admin/api-clients/{id}/logs' => array(
-                'get' => $this->simpleOp('Admin', 'List request logs for one API client', 'success', array('logs' => array(array('endpoint' => 'api/v1/analytics/overview', 'method' => 'GET'))), array('CookieSession' => array()), TRUE)
+                'get' => $this->simpleOp('Admin', 'List request logs for one API client', 'success', array('logs' => array(array('endpoint' => 'api/v1/analytics/overview', 'method' => 'GET'))), array(), TRUE)
             ),
             '/admin/api-stats' => array(
-                'get' => $this->simpleOp('Admin', 'Return API usage statistics by client and endpoint', 'success', array('stats' => array('client_stats' => array(), 'endpoint_stats' => array(), 'recent_access' => array())), array('CookieSession' => array()))
+                'get' => $this->simpleOp('Admin', 'Return API usage statistics by client and endpoint', 'success', array('stats' => array('client_stats' => array(), 'endpoint_stats' => array(), 'recent_access' => array())), array())
             ),
             '/admin/select-winner' => array(
-                'post' => $this->writeOp('Admin', 'Manually run featured-alumni winner selection for a date', '#/components/schemas/WinnerSelectionInput', array('status' => 'success', 'message' => 'Winner selected.'), array('CookieSession' => array()), FALSE, FALSE)
+                'post' => $this->writeOp('Admin', 'Manually run featured-alumni winner selection for a date', '#/components/schemas/WinnerSelectionInput', array('status' => 'success', 'message' => 'Winner selected.'), array(), FALSE, FALSE)
             )
         );
     }
@@ -349,17 +343,17 @@ class Docs extends CI_Controller
     private function crudCollection($tag, $item_key, $collection_key, $schema_ref, $example_item)
     {
         return array(
-            'get' => $this->simpleOp($tag, 'List ' . $collection_key, 'success', array($collection_key => array()), array('CookieSession' => array())),
-            'post' => $this->writeOp($tag, 'Create ' . $item_key, $schema_ref, array('status' => 'created', 'message' => ucfirst($item_key) . ' added successfully.', $item_key => array_merge(array('id' => 1), $example_item)), array('CookieSession' => array()))
+            'get' => $this->simpleOp($tag, 'List ' . $collection_key, 'success', array($collection_key => array()), array()),
+            'post' => $this->writeOp($tag, 'Create ' . $item_key, $schema_ref, array('status' => 'created', 'message' => ucfirst($item_key) . ' added successfully.', $item_key => array_merge(array('id' => 1), $example_item)), array())
         );
     }
 
     private function crudItem($tag, $item_key, $schema_ref)
     {
         return array(
-            'get' => $this->simpleOp($tag, 'Get ' . $item_key, 'success', array($item_key => array('id' => 1)), array('CookieSession' => array()), TRUE),
-            'patch' => $this->writeOp($tag, 'Update ' . $item_key, $schema_ref, array('status' => 'success', 'message' => ucfirst($item_key) . ' updated successfully.', $item_key => array('id' => 1)), array('CookieSession' => array()), TRUE, FALSE),
-            'delete' => $this->deleteOp($tag, 'Delete ' . $item_key, array('CookieSession' => array()), TRUE)
+            'get' => $this->simpleOp($tag, 'Get ' . $item_key, 'success', array($item_key => array('id' => 1)), array(), TRUE),
+            'patch' => $this->writeOp($tag, 'Update ' . $item_key, $schema_ref, array('status' => 'success', 'message' => ucfirst($item_key) . ' updated successfully.', $item_key => array('id' => 1)), array(), TRUE, FALSE),
+            'delete' => $this->deleteOp($tag, 'Delete ' . $item_key, array(), TRUE)
         );
     }
 
@@ -368,7 +362,7 @@ class Docs extends CI_Controller
         return array(
             'tags' => array('My Profile'),
             'summary' => 'Upload or replace the authenticated alumni profile image',
-            'security' => array(array('CookieSession' => array())),
+            'security' => array(array()),
             'requestBody' => array(
                 'required' => TRUE,
                 'content' => array(
@@ -491,3 +485,4 @@ class Docs extends CI_Controller
         );
     }
 }
+

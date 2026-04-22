@@ -8,9 +8,9 @@
     <style>
         body { margin: 0; background: #fafafa; }
         .topbar { display: none !important; }
-        .header-bar { background: #343a40; color: white; padding: 15px 30px; }
+        .header-bar { background: #0b4f4a; color: white; padding: 15px 30px; }
         .header-bar h1 { margin: 0; font-size: 24px; }
-        .header-bar a { color: #adb5bd; text-decoration: none; margin-left: 20px; }
+        .header-bar a { color: rgba(255,255,255,0.78); text-decoration: none; margin-left: 20px; }
         .header-bar a:hover { color: white; }
     </style>
 </head>

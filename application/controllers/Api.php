@@ -1744,7 +1744,8 @@ class Api extends CI_Controller
             $this->_json_response(array(
                 'error'   => 'Forbidden',
                 'message' => 'Insufficient token scope for this endpoint.',
-                'required_scope' => $required
+                'required_scope' => $required,
+                'accepted_scopes' => $accepted
             ), 403);
             return FALSE;
         }
