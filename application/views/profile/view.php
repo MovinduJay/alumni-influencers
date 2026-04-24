@@ -32,64 +32,76 @@
     </div>
 
     <div class="col-md-8">
-        <?php if (!empty($profile['degrees'])): ?>
-        <div class="card">
-            <div class="card-header"><h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Degrees</h5></div>
-            <div class="card-body">
-                <?php foreach ($profile['degrees'] as $degree): ?>
-                    <div class="mb-2 pb-2 border-bottom">
-                        <strong><?php echo htmlspecialchars($degree->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                        <span class="text-muted"><?php echo htmlspecialchars($degree->institution, ENT_QUOTES, 'UTF-8'); ?></span>
-                        <?php if ($degree->completion_date): ?>
-                            <br><small>Completed: <?php echo htmlspecialchars($degree->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
-                        <?php endif; ?>
+        <div class="row g-3 mb-3">
+            <?php if (!empty($profile['degrees'])): ?>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Degrees</h5></div>
+                    <div class="card-body">
+                        <?php foreach ($profile['degrees'] as $degree): ?>
+                            <div class="mb-2 pb-2 border-bottom">
+                                <strong><?php echo htmlspecialchars($degree->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                <span class="text-muted"><?php echo htmlspecialchars($degree->institution, ENT_QUOTES, 'UTF-8'); ?></span>
+                                <?php if ($degree->completion_date): ?>
+                                    <br><small>Completed: <?php echo htmlspecialchars($degree->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
-        </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <?php if (!empty($profile['certifications'])): ?>
-        <div class="card">
-            <div class="card-header"><h5 class="mb-0"><i class="fas fa-certificate"></i> Certifications</h5></div>
-            <div class="card-body">
-                <?php foreach ($profile['certifications'] as $cert): ?>
-                    <div class="mb-2 pb-2 border-bottom">
-                        <strong><?php echo htmlspecialchars($cert->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                        <span class="text-muted"><?php echo htmlspecialchars($cert->issuer, ENT_QUOTES, 'UTF-8'); ?></span>
+            <?php if (!empty($profile['certifications'])): ?>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-certificate"></i> Certifications</h5></div>
+                    <div class="card-body">
+                        <?php foreach ($profile['certifications'] as $cert): ?>
+                            <div class="mb-2 pb-2 border-bottom">
+                                <strong><?php echo htmlspecialchars($cert->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                <span class="text-muted"><?php echo htmlspecialchars($cert->issuer, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
 
-        <?php if (!empty($profile['licences'])): ?>
-        <div class="card">
-            <div class="card-header"><h5 class="mb-0"><i class="fas fa-id-card"></i> Licences</h5></div>
-            <div class="card-body">
-                <?php foreach ($profile['licences'] as $licence): ?>
-                    <div class="mb-2 pb-2 border-bottom">
-                        <strong><?php echo htmlspecialchars($licence->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                        <span class="text-muted"><?php echo htmlspecialchars($licence->awarding_body, ENT_QUOTES, 'UTF-8'); ?></span>
+        <div class="row g-3 mb-3">
+            <?php if (!empty($profile['licences'])): ?>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-id-card"></i> Licences</h5></div>
+                    <div class="card-body">
+                        <?php foreach ($profile['licences'] as $licence): ?>
+                            <div class="mb-2 pb-2 border-bottom">
+                                <strong><?php echo htmlspecialchars($licence->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                <span class="text-muted"><?php echo htmlspecialchars($licence->awarding_body, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
-        </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <?php if (!empty($profile['courses'])): ?>
-        <div class="card">
-            <div class="card-header"><h5 class="mb-0"><i class="fas fa-book-open"></i> Courses</h5></div>
-            <div class="card-body">
-                <?php foreach ($profile['courses'] as $course): ?>
-                    <div class="mb-2 pb-2 border-bottom">
-                        <strong><?php echo htmlspecialchars($course->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                        <span class="text-muted"><?php echo htmlspecialchars($course->provider, ENT_QUOTES, 'UTF-8'); ?></span>
+            <?php if (!empty($profile['courses'])): ?>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header"><h5 class="mb-0"><i class="fas fa-book-open"></i> Courses</h5></div>
+                    <div class="card-body">
+                        <?php foreach ($profile['courses'] as $course): ?>
+                            <div class="mb-2 pb-2 border-bottom">
+                                <strong><?php echo htmlspecialchars($course->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                <span class="text-muted"><?php echo htmlspecialchars($course->provider, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
 
         <?php if (!empty($profile['employment_history'])): ?>
         <div class="card">

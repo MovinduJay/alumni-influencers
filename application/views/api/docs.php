@@ -18,7 +18,7 @@
     <div class="header-bar">
         <h1>
             <i class="fas fa-graduation-cap"></i> Alumni Influencers Platform - API Documentation
-            <a href="<?php echo site_url('/'); ?>">← Back to App</a>
+            <a href="<?php echo site_url('/'); ?>">Back to App</a>
         </h1>
     </div>
 

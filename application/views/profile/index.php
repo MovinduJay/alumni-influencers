@@ -40,78 +40,86 @@
     </div>
 
     <div class="col-md-8">
-        <!-- Degrees -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Degrees</h5>
-                <a href="<?php echo site_url('profile/degrees/add'); ?>" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus"></i> Add
-                </a>
+        <div class="row g-3 mb-3">
+            <!-- Degrees -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Degrees</h5>
+                        <a href="<?php echo site_url('profile/degrees/add'); ?>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> Add
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($profile['degrees'])): ?>
+                            <?php foreach ($profile['degrees'] as $degree): ?>
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-3 pb-3 border-bottom">
+                                    <div class="min-w-0">
+                                        <strong><?php echo htmlspecialchars($degree->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                        <span class="text-muted"><?php echo htmlspecialchars($degree->institution, ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <?php if ($degree->completion_date): ?>
+                                            <br><small class="text-muted">Completed: <?php echo htmlspecialchars($degree->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
+                                        <?php endif; ?>
+                                        <?php if ($degree->url): ?>
+                                            <br><a href="<?php echo htmlspecialchars($degree->url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="small">View Details</a>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-nowrap">
+                                        <a href="<?php echo site_url('profile/degrees/edit/' . $degree->id); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="<?php echo site_url('profile/degrees/delete/' . $degree->id); ?>" class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Are you sure you want to delete this degree?');"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-muted mb-0">No degrees added yet.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <?php if (!empty($profile['degrees'])): ?>
-                    <?php foreach ($profile['degrees'] as $degree): ?>
-                        <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                            <div>
-                                <strong><?php echo htmlspecialchars($degree->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                                <span class="text-muted"><?php echo htmlspecialchars($degree->institution, ENT_QUOTES, 'UTF-8'); ?></span>
-                                <?php if ($degree->completion_date): ?>
-                                    <br><small class="text-muted">Completed: <?php echo htmlspecialchars($degree->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
-                                <?php endif; ?>
-                                <?php if ($degree->url): ?>
-                                    <br><a href="<?php echo htmlspecialchars($degree->url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="small">View Details</a>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <a href="<?php echo site_url('profile/degrees/edit/' . $degree->id); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                <a href="<?php echo site_url('profile/degrees/delete/' . $degree->id); ?>" class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Are you sure you want to delete this degree?');"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p class="text-muted">No degrees added yet.</p>
-                <?php endif; ?>
+
+            <!-- Certifications -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-certificate"></i> Certifications</h5>
+                        <a href="<?php echo site_url('profile/certifications/add'); ?>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> Add
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($profile['certifications'])): ?>
+                            <?php foreach ($profile['certifications'] as $cert): ?>
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-3 pb-3 border-bottom">
+                                    <div class="min-w-0">
+                                        <strong><?php echo htmlspecialchars($cert->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                                        <span class="text-muted"><?php echo htmlspecialchars($cert->issuer, ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <?php if ($cert->completion_date): ?>
+                                            <br><small class="text-muted">Completed: <?php echo htmlspecialchars($cert->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
+                                        <?php endif; ?>
+                                        <?php if ($cert->url): ?>
+                                            <br><a href="<?php echo htmlspecialchars($cert->url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="small">View Details</a>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-nowrap">
+                                        <a href="<?php echo site_url('profile/certifications/edit/' . $cert->id); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="<?php echo site_url('profile/certifications/delete/' . $cert->id); ?>" class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Are you sure?');"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-muted mb-0">No certifications added yet.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Certifications -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-certificate"></i> Certifications</h5>
-                <a href="<?php echo site_url('profile/certifications/add'); ?>" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus"></i> Add
-                </a>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($profile['certifications'])): ?>
-                    <?php foreach ($profile['certifications'] as $cert): ?>
-                        <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                            <div>
-                                <strong><?php echo htmlspecialchars($cert->title, ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                                <span class="text-muted"><?php echo htmlspecialchars($cert->issuer, ENT_QUOTES, 'UTF-8'); ?></span>
-                                <?php if ($cert->completion_date): ?>
-                                    <br><small class="text-muted">Completed: <?php echo htmlspecialchars($cert->completion_date, ENT_QUOTES, 'UTF-8'); ?></small>
-                                <?php endif; ?>
-                                <?php if ($cert->url): ?>
-                                    <br><a href="<?php echo htmlspecialchars($cert->url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="small">View Details</a>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <a href="<?php echo site_url('profile/certifications/edit/' . $cert->id); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                <a href="<?php echo site_url('profile/certifications/delete/' . $cert->id); ?>" class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Are you sure?');"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p class="text-muted">No certifications added yet.</p>
-                <?php endif; ?>
-            </div>
-        </div>
-
+        <div class="row g-3 mb-3">
+            <div class="col-lg-6">
         <!-- Licences -->
-        <div class="card">
+        <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-id-card"></i> Professional Licences</h5>
                 <a href="<?php echo site_url('profile/licences/add'); ?>" class="btn btn-sm btn-primary">
@@ -144,9 +152,11 @@
                 <?php endif; ?>
             </div>
         </div>
+            </div>
 
+            <div class="col-lg-6">
         <!-- Courses -->
-        <div class="card">
+        <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-book-open"></i> Professional Courses</h5>
                 <a href="<?php echo site_url('profile/courses/add'); ?>" class="btn btn-sm btn-primary">
@@ -177,6 +187,8 @@
                 <?php else: ?>
                     <p class="text-muted">No courses added yet.</p>
                 <?php endif; ?>
+            </div>
+        </div>
             </div>
         </div>
 

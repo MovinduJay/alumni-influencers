@@ -18,6 +18,7 @@
         .table { color: #1f2937; }
         .table th { color: #334155; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
         code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .9em; }
+        .min-w-0 { min-width: 0; }
         .card { margin-bottom: 20px; box-shadow: 0 1px 2px rgba(15,23,42,0.08); }
         .card-header,
         .card-header.bg-primary,

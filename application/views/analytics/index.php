@@ -68,16 +68,16 @@
                         <label>Keyword
                             <input type="search" name="keyword" class="form-control" maxlength="80" placeholder="Role, company, skill">
                         </label>
-                    </div>
-                    <div class="filter-actions">
-                        <select id="preset-select" class="form-select">
-                            <option value="">Load saved preset</option>
-                            <?php foreach ($presets as $preset): ?>
-                                <option value="<?php echo htmlspecialchars($preset->filters_json, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($preset->name, ENT_QUOTES, 'UTF-8'); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
-                        <button type="button" class="btn btn-outline-secondary" id="reset-filters"><i class="fas fa-rotate-left"></i> Reset</button>
+                        <div class="filter-actions filter-actions-inline">
+                            <select id="preset-select" class="form-select">
+                                <option value="">Load saved preset</option>
+                                <?php foreach ($presets as $preset): ?>
+                                    <option value="<?php echo htmlspecialchars($preset->filters_json, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($preset->name, ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
+                            <button type="button" class="btn btn-outline-secondary" id="reset-filters"><i class="fas fa-rotate-left"></i> Reset</button>
+                        </div>
                     </div>
                     <div class="report-options">
                         <span>PDF sections</span>
