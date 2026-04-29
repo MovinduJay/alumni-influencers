@@ -1,17 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Welcome Controller
- *
- * Default landing page for the Alumni Influencers Platform.
- * Shows today's featured alumni and links to register/login.
- */
 class Welcome extends MY_Controller
 {
-	/**
-	 * Index Page - Landing page
-	 */
 	public function index()
 	{
 		$this->load->model('Bid_model');
@@ -26,3 +17,5 @@ class Welcome extends MY_Controller
 		$this->load->view('layouts/footer');
 	}
 }
+
+

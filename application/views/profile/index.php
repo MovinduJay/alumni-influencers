@@ -1,6 +1,5 @@
 <div class="row">
     <div class="col-md-4">
-        <!-- Profile Card -->
         <div class="card">
             <div class="card-body text-center">
                 <?php if (!empty($profile['alumni']->profile_image)): ?>
@@ -28,7 +27,6 @@
             </div>
         </div>
 
-        <!-- Bio Card -->
         <?php if (!empty($profile['alumni']->bio)): ?>
         <div class="card">
             <div class="card-header"><h5 class="mb-0">About Me</h5></div>
@@ -41,7 +39,6 @@
 
     <div class="col-md-8">
         <div class="row g-3 mb-3">
-            <!-- Degrees -->
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -78,7 +75,6 @@
                 </div>
             </div>
 
-            <!-- Certifications -->
             <div class="col-lg-6">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -118,7 +114,6 @@
 
         <div class="row g-3 mb-3">
             <div class="col-lg-6">
-        <!-- Licences -->
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-id-card"></i> Professional Licences</h5>
@@ -155,7 +150,6 @@
             </div>
 
             <div class="col-lg-6">
-        <!-- Courses -->
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-book-open"></i> Professional Courses</h5>
@@ -192,7 +186,6 @@
             </div>
         </div>
 
-        <!-- Employment History -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-briefcase"></i> Employment History</h5>

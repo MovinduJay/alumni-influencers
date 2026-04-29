@@ -1,32 +1,12 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * API Controller
- *
- * Public REST API endpoints secured with bearer tokens.
- * Provides read endpoints for featured alumni and alumni resources,
- * plus controlled write endpoints for alumni via HTTP POST/PATCH/DELETE.
- */
 class Api extends CI_Controller
 {
-    /**
-     * @var object|null Authenticated API client
-     */
     protected $api_client = NULL;
 
-    /**
-     * Normalized scope strings for the authenticated client.
-     *
-     * @var array
-     */
     protected $api_scopes = array();
 
-    /**
-     * API methods that do not require bearer-token authentication.
-     *
-     * @var array
-     */
     protected $public_methods = array(
         'auth_register',
         'auth_verify',
@@ -37,11 +17,6 @@ class Api extends CI_Controller
         'auth_me'
     );
 
-    /**
-     * API methods that use the logged-in alumni session rather than bearer tokens.
-     *
-     * @var array
-     */
     protected $session_methods = array(
         'auth_me',
         'profile_me',
@@ -97,11 +72,6 @@ class Api extends CI_Controller
         }
     }
 
-    /**
-     * Register a new alumni account using JSON.
-     *
-     * POST /api/v1/auth/register
-     */
     public function auth_register()
     {
         if ($this->input->method() !== 'post') {
@@ -138,11 +108,6 @@ class Api extends CI_Controller
         $this->_json_response($response, 201);
     }
 
-    /**
-     * Verify an email using the token from email.
-     *
-     * POST /api/v1/auth/verify
-     */
     public function auth_verify()
     {
         if ($this->input->method() !== 'post') {
@@ -160,11 +125,6 @@ class Api extends CI_Controller
         $this->_json_response(array('status' => 'success', 'message' => 'Email verified successfully.'), 200);
     }
 
-    /**
-     * Request a password reset email.
-     *
-     * POST /api/v1/auth/forgot-password
-     */
     public function auth_forgot_password()
     {
         if ($this->input->method() !== 'post') {
@@ -195,11 +155,6 @@ class Api extends CI_Controller
         $this->_json_response($response, 200);
     }
 
-    /**
-     * Reset a password using the emailed token.
-     *
-     * POST /api/v1/auth/reset-password
-     */
     public function auth_reset_password()
     {
         if ($this->input->method() !== 'post') {
@@ -221,11 +176,6 @@ class Api extends CI_Controller
         $this->_json_response(array('status' => 'success', 'message' => 'Password reset successfully.'), 200);
     }
 
-    /**
-     * Session-based JSON login endpoint for browser or Postman clients.
-     *
-     * POST /api/v1/auth/login
-     */
     public function auth_login()
     {
         if ($this->input->method() !== 'post') {
@@ -284,11 +234,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Return the current authenticated session user for API clients.
-     *
-     * GET /api/v1/auth/me
-     */
     public function auth_me()
     {
         if ($this->input->method() !== 'get') {
@@ -349,11 +294,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Destroy the current authenticated session.
-     *
-     * POST /api/v1/auth/logout
-     */
     public function auth_logout()
     {
         if ($this->input->method() !== 'post') {
@@ -369,11 +309,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Session-authenticated current profile endpoint.
-     *
-     * GET/PATCH /api/v1/me/profile
-     */
     public function profile_me()
     {
         $alumni_id = $this->_require_session_auth();
@@ -422,11 +357,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * Multipart profile image upload endpoint.
-     *
-     * POST /api/v1/me/profile/image
-     */
     public function profile_image_upload()
     {
         $alumni_id = $this->_require_session_auth();
@@ -1078,11 +1008,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * Admin API client management.
-     *
-     * GET/POST /api/v1/admin/api-clients
-     */
     public function admin_api_clients()
     {
         $this->_require_admin_session() || exit;
@@ -1118,11 +1043,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * Admin API client activation/revocation endpoint.
-     *
-     * PATCH /api/v1/admin/api-clients/{id}
-     */
     public function admin_api_client_item($id)
     {
         $this->_require_admin_session() || exit;
@@ -1157,11 +1077,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * View logs for an API client.
-     *
-     * GET /api/v1/admin/api-clients/{id}/logs
-     */
     public function admin_api_client_logs($id)
     {
         $this->_require_admin_session() || exit;
@@ -1177,11 +1092,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * API usage statistics for admins.
-     *
-     * GET /api/v1/admin/api-stats
-     */
     public function admin_api_stats()
     {
         $this->_require_admin_session() || exit;
@@ -1197,11 +1107,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Manually trigger featured alumni winner selection from a session-authenticated admin API call.
-     *
-     * POST /api/v1/admin/select-winner
-     */
     public function admin_select_winner()
     {
         $this->_require_admin_session() || exit;
@@ -1246,11 +1151,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Authenticate API request using bearer token.
-     *
-     * @return bool
-     */
     private function _authenticate()
     {
         $auth_header = $this->input->get_request_header('Authorization');
@@ -1274,7 +1174,7 @@ class Api extends CI_Controller
             return FALSE;
         }
 
-        // Use the configured default for legacy client rows without assignments.
+        // Old seed clients may not have rows in api_client_scopes, so fall back safely.
         $this->api_scopes = !empty($this->api_client->scopes)
             ? $this->api_client->scopes
             : $this->Api_client_model->scope_string_to_array(getenv('DEFAULT_API_SCOPE') ?: 'read:alumni,read:analytics');
@@ -1289,9 +1189,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Legacy alias for GET /api/v1/featured/today.
-     */
     public function featured_today()
     {
         if ($this->input->method() !== 'get') {
@@ -1335,9 +1232,6 @@ class Api extends CI_Controller
         $this->_json_response($response, 200);
     }
 
-    /**
-     * Legacy alias for GET /api/v1/featured.
-     */
     public function featured()
     {
         if ($this->input->method() !== 'get') {
@@ -1357,9 +1251,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Canonical collection endpoint: GET /api/v1/featured-alumni
-     */
     public function featured_alumni_index()
     {
         if ($this->input->method() !== 'get') {
@@ -1394,11 +1285,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Canonical item endpoint: GET /api/v1/featured-alumni/{date|current}
-     *
-     * @param string $date
-     */
     public function featured_alumni_item($date = 'current')
     {
         if ($this->input->method() !== 'get') {
@@ -1426,11 +1312,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * REST item endpoint: GET/PATCH/DELETE /api/v1/alumni/{id}
-     *
-     * @param int $id
-     */
     public function alumni($id)
     {
         $method = $this->input->method();
@@ -1521,9 +1402,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * REST collection endpoint: GET/POST /api/v1/alumni
-     */
     public function alumni_list()
     {
         $method = $this->input->method();
@@ -1602,11 +1480,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * GET /api/v1/analytics/options
-     *
-     * Dimension lists for dashboard filters.
-     */
     public function analytics_options()
     {
         if ($this->input->method() !== 'get') {
@@ -1623,11 +1496,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * GET /api/v1/analytics/overview
-     *
-     * Returns all chart-ready datasets used by the University Analytics Dashboard.
-     */
     public function analytics_overview()
     {
         if ($this->input->method() !== 'get') {
@@ -1646,11 +1514,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * GET /api/v1/analytics/alumni
-     *
-     * Filtered alumni list for the dashboard table and exports.
-     */
     public function analytics_alumni()
     {
         if ($this->input->method() !== 'get') {
@@ -1671,11 +1534,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * GET /api/v1/donations/summary
-     *
-     * Sponsorship/donation-style funding summary for clients with donation scope.
-     */
     public function donations_summary()
     {
         if ($this->input->method() !== 'get') {
@@ -1697,12 +1555,6 @@ class Api extends CI_Controller
         ), 200);
     }
 
-    /**
-     * Output a JSON response with proper headers.
-     *
-     * @param array $data
-     * @param int $status
-     */
     private function _json_response($data, $status = 200)
     {
         $this->output
@@ -1716,14 +1568,9 @@ class Api extends CI_Controller
         }
     }
 
-    /**
-     * Enforce a required scope for the current API request.
-     *
-     * @param string $required
-     * @return bool
-     */
     private function _require_scope($required)
     {
+        // CW2 originally used read:* scopes, but some older routes use the shorter aliases.
         $aliases = array(
             'featured:read' => 'read:alumni_of_day',
             'alumni:read' => 'read:alumni',
@@ -1752,16 +1599,10 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Build a public alumni payload without sensitive fields.
-     *
-     * @param array $profile
-     * @param array $fields
-     * @return object
-     */
     private function _public_profile_payload($profile, $fields = array())
     {
         $public_profile = $profile['alumni'];
+        // Public API responses should not expose account-level fields.
         unset($public_profile->email);
         unset($public_profile->role);
         unset($public_profile->user_type);
@@ -1797,11 +1638,6 @@ class Api extends CI_Controller
         return $public_profile;
     }
 
-    /**
-     * Parse a request body as JSON or urlencoded input.
-     *
-     * @return array
-     */
     private function _request_payload()
     {
         $raw = file_get_contents('php://input');
@@ -1822,12 +1658,6 @@ class Api extends CI_Controller
         return is_array($data) ? $this->_sanitize_payload($data, array('password', 'confirm_password', 'token')) : array();
     }
 
-    /**
-     * Validate create payload for alumni resource creation.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     private function _validate_alumni_create($payload)
     {
         $required = array('email', 'password', 'first_name', 'last_name');
@@ -1869,12 +1699,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Extract safe updatable alumni fields from request payload.
-     *
-     * @param array $payload
-     * @return array
-     */
     private function _extract_alumni_update($payload)
     {
         $update = array();
@@ -1895,11 +1719,6 @@ class Api extends CI_Controller
         return $update;
     }
 
-    /**
-     * Require an authenticated alumni session for session-based API endpoints.
-     *
-     * @return int|false
-     */
     private function _require_session_auth()
     {
         $alumni_id = (int)$this->session->userdata('alumni_id');
@@ -1914,11 +1733,6 @@ class Api extends CI_Controller
         return $alumni_id;
     }
 
-    /**
-     * Require an authenticated admin session.
-     *
-     * @return bool
-     */
     private function _require_admin_session()
     {
         if (!$this->session->userdata('logged_in') || $this->session->userdata('user_type') !== 'admin' || (int)$this->session->userdata('admin_id') <= 0) {
@@ -1929,12 +1743,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate basic profile update payload.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     private function _validate_profile_update($payload)
     {
         if (empty($payload['first_name']) || empty($payload['last_name'])) {
@@ -1960,14 +1768,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate profile section records with shared URL/date rules.
-     *
-     * @param array $payload
-     * @param array $required
-     * @param string $mode
-     * @return true|string
-     */
     private function _validate_profile_record($payload, $required, $mode)
     {
         foreach ($required as $field) {
@@ -1995,12 +1795,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate employment create/update payload.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     private function _validate_employment_payload($payload)
     {
         foreach (array('company', 'position', 'start_date') as $field) {
@@ -2028,13 +1822,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate bid creation payload against current business rules.
-     *
-     * @param array $payload
-     * @param int $alumni_id
-     * @return true|string
-     */
     private function _validate_bid_create_payload($payload, $alumni_id)
     {
         if (!isset($payload['amount']) || !is_numeric($payload['amount']) || (float)$payload['amount'] <= 0) {
@@ -2070,12 +1857,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate sponsorship create payload.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     private function _validate_sponsorship_payload($payload)
     {
         if (empty($payload['sponsor_name'])) {
@@ -2098,12 +1879,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Validate event participation create payload.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     private function _validate_event_payload($payload)
     {
         if (empty($payload['event_name'])) {
@@ -2121,9 +1896,6 @@ class Api extends CI_Controller
         return TRUE;
     }
 
-    /**
-     * Shared CRUD handler for profile sub-records.
-     */
     private function _profile_record_item($resource_name, $id, $getter, $updater, $deleter, $required_fields, $mode)
     {
         $alumni_id = $this->_require_session_auth();
@@ -2182,13 +1954,6 @@ class Api extends CI_Controller
         $this->_json_response(array('error' => 'Method not allowed'), 405);
     }
 
-    /**
-     * Coerce an optional string payload field to NULL or trimmed text.
-     *
-     * @param array $payload
-     * @param string $field
-     * @return string|null
-     */
     private function _nullable_string($payload, $field)
     {
         if (!isset($payload[$field])) {
@@ -2199,13 +1964,6 @@ class Api extends CI_Controller
         return $value === '' ? NULL : $value;
     }
 
-    /**
-     * Find one owned record from a preloaded collection.
-     *
-     * @param array $records
-     * @param int $id
-     * @return object|null
-     */
     private function _find_owned_record($records, $id)
     {
         foreach ($records as $record) {
@@ -2238,17 +1996,6 @@ class Api extends CI_Controller
         return preg_match('/^[a-z0-9 ]+$/i', trim((string)$value)) === 1;
     }
 
-    /**
-     * Recursively sanitize request payload values at the controller boundary.
-     *
-     * Passwords and opaque tokens are intentionally excluded from XSS cleaning
-     * to preserve exact values for hashing and comparison.
-     *
-     * @param mixed $value
-     * @param array $raw_fields
-     * @param string|null $field_name
-     * @return mixed
-     */
     private function _sanitize_payload($value, $raw_fields = array(), $field_name = NULL)
     {
         if (is_array($value)) {
@@ -2270,12 +2017,6 @@ class Api extends CI_Controller
         return $this->_sanitize_scalar($value);
     }
 
-    /**
-     * Normalize plain-text input and strip potentially unsafe markup.
-     *
-     * @param mixed $value
-     * @return string
-     */
     private function _sanitize_scalar($value)
     {
         $value = trim((string)$value);
@@ -2289,15 +2030,6 @@ class Api extends CI_Controller
         return is_string($value) ? trim($value) : '';
     }
 
-    /**
-     * Parse integer query parameter within bounds.
-     *
-     * @param string $name
-     * @param int $default
-     * @param int $min
-     * @param int $max
-     * @return int
-     */
     private function _query_int($name, $default, $min, $max)
     {
         $value = $this->input->get($name, TRUE);
@@ -2308,11 +2040,6 @@ class Api extends CI_Controller
         return max($min, min($max, $value));
     }
 
-    /**
-     * Parse supported fields query parameter.
-     *
-     * @return array
-     */
     private function _query_fields()
     {
         $fields = $this->input->get('fields', TRUE);
@@ -2329,35 +2056,17 @@ class Api extends CI_Controller
         return array_values(array_intersect($parts, $allowed));
     }
 
-    /**
-     * Parse sort field.
-     *
-     * @param string|null $value
-     * @param array $allowed
-     * @return string
-     */
     private function _query_sort($value, $allowed)
     {
         $value = ltrim((string)$value, '-');
         return in_array($value, $allowed, TRUE) ? $value : $allowed[0];
     }
 
-    /**
-     * Parse sort direction from a sort query parameter.
-     *
-     * @param string|null $value
-     * @return string
-     */
     private function _query_direction($value)
     {
         return is_string($value) && strpos($value, '-') === 0 ? 'DESC' : 'ASC';
     }
 
-    /**
-     * Resolve the current controller method across CI router variants.
-     *
-     * @return string
-     */
     private function _current_method()
     {
         if (is_object($this->router) && method_exists($this->router, 'fetch_method')) {
@@ -2371,3 +2080,5 @@ class Api extends CI_Controller
         return 'index';
     }
 }
+
+

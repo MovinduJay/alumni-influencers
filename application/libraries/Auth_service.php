@@ -1,18 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Shared authentication service.
- *
- * Centralizes security-sensitive auth logic so the web and API controllers
- * reuse the same rules for registration, login, verification, password reset,
- * email delivery, and rate limiting.
- */
 class Auth_service
 {
-    /**
-     * @var CI_Controller
-     */
     protected $CI;
 
     public function __construct()
@@ -24,15 +14,6 @@ class Auth_service
         $this->CI->load->helper('email_config');
     }
 
-    /**
-     * Enforce a per-IP rate limit for sensitive auth actions.
-     *
-     * Falls back to session-backed tracking during initial setup when the
-     * database table is unavailable.
-     *
-     * @param string $action
-     * @return bool
-     */
     public function check_rate_limit($action)
     {
         $max_requests = (int) (getenv('RATE_LIMIT') ?: 60);
@@ -85,12 +66,6 @@ class Auth_service
         return TRUE;
     }
 
-    /**
-     * Validate password strength.
-     *
-     * @param string $password
-     * @return true|string
-     */
     public function validate_password_strength($password)
     {
         if (strlen($password) < 8) {
@@ -112,12 +87,6 @@ class Auth_service
         return TRUE;
     }
 
-    /**
-     * Validate the API registration payload.
-     *
-     * @param array $payload
-     * @return true|string
-     */
     public function validate_registration_payload($payload)
     {
         $payload = $this->sanitize_payload($payload, array('password', 'confirm_password'));
@@ -147,12 +116,6 @@ class Auth_service
         return $this->validate_password_strength($payload['password']);
     }
 
-    /**
-     * Register a new alumni account and send the verification email.
-     *
-     * @param array $payload
-     * @return array
-     */
     public function register_alumni($payload)
     {
         $payload = $this->sanitize_payload($payload, array('password', 'confirm_password'));
@@ -211,12 +174,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Verify an email token and activate the account.
-     *
-     * @param string $token
-     * @return array
-     */
     public function verify_email_token($token)
     {
         $token = trim((string) $token);
@@ -257,12 +214,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Create and email a password reset token for a valid alumni email.
-     *
-     * @param string $email
-     * @return array
-     */
     public function request_password_reset($email)
     {
         $email = strtolower(trim((string) $email));
@@ -297,14 +248,6 @@ class Auth_service
         return $response;
     }
 
-    /**
-     * Reset an alumni password using the emailed token.
-     *
-     * @param string $token
-     * @param string $password
-     * @param string $confirm_password
-     * @return array
-     */
     public function reset_password($token, $password, $confirm_password)
     {
         $token = trim((string) $token);
@@ -370,12 +313,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Verify a password reset token without changing the password.
-     *
-     * @param string $token
-     * @return array
-     */
     public function verify_reset_token($token)
     {
         $token = trim((string) $token);
@@ -414,13 +351,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Authenticate alumni credentials and return the account state result.
-     *
-     * @param string $email
-     * @param string $password
-     * @return array
-     */
     public function authenticate_credentials($email, $password)
     {
         $email = strtolower(trim((string) $email));
@@ -493,12 +423,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Regenerate the session and persist the authenticated user state.
-     *
-     * @param object $alumni
-     * @return array
-     */
     public function start_session($alumni)
     {
         $this->CI->session->sess_regenerate(TRUE);
@@ -509,12 +433,6 @@ class Auth_service
         return $session_data;
     }
 
-    /**
-     * Regenerate the session and persist authenticated admin state.
-     *
-     * @param object $admin
-     * @return array
-     */
     public function start_admin_session($admin)
     {
         $this->CI->session->sess_regenerate(TRUE);
@@ -536,12 +454,6 @@ class Auth_service
         return $session_data;
     }
 
-    /**
-     * Build the canonical alumni session payload.
-     *
-     * @param object $alumni
-     * @return array
-     */
     public function build_session_data($alumni)
     {
         $now = time();
@@ -559,12 +471,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Remove sensitive fields from the API session-user response.
-     *
-     * @param object $alumni
-     * @return object
-     */
     public function session_user_payload($alumni)
     {
         $user = clone $alumni;
@@ -577,13 +483,6 @@ class Auth_service
         return $user;
     }
 
-    /**
-     * Expose verification/reset tokens only in development and testing.
-     *
-     * @param string $type
-     * @param string $token
-     * @return array
-     */
     public function debug_token_payload($type, $token)
     {
         if (!in_array((string) getenv('CI_ENV'), array('development', 'testing'), TRUE)) {
@@ -600,13 +499,6 @@ class Auth_service
         );
     }
 
-    /**
-     * Deliver a verification email.
-     *
-     * @param string $email
-     * @param string $token
-     * @return void
-     */
     public function send_verification_email($email, $token)
     {
         $this->CI->load->library('email');
@@ -630,13 +522,6 @@ class Auth_service
         send_email_safely($this->CI->email);
     }
 
-    /**
-     * Deliver a password reset email.
-     *
-     * @param string $email
-     * @param string $token
-     * @return void
-     */
     public function send_reset_email($email, $token)
     {
         $this->CI->load->library('email');
@@ -660,39 +545,17 @@ class Auth_service
         send_email_safely($this->CI->email);
     }
 
-    /**
-     * Shared string length validation used by registration rules.
-     *
-     * @param string $value
-     * @param int $min
-     * @param int $max
-     * @return bool
-     */
     protected function valid_length($value, $min, $max)
     {
         $length = strlen(trim((string) $value));
         return $length >= $min && $length <= $max;
     }
 
-    /**
-     * Restrict names to the same character set across UI and API flows.
-     *
-     * @param string $value
-     * @return bool
-     */
     protected function valid_alpha_numeric_spaces($value)
     {
         return preg_match('/^[a-z0-9 ]+$/i', trim((string) $value)) === 1;
     }
 
-    /**
-     * Recursively sanitize payload data while preserving raw password fields.
-     *
-     * @param mixed $value
-     * @param array $raw_fields
-     * @param string|null $field_name
-     * @return mixed
-     */
     protected function sanitize_payload($value, $raw_fields = array(), $field_name = NULL)
     {
         if (is_array($value)) {
@@ -714,12 +577,6 @@ class Auth_service
         return $this->sanitize_plain_text($value);
     }
 
-    /**
-     * Normalize plain-text user input before validation or persistence.
-     *
-     * @param mixed $value
-     * @return string
-     */
     protected function sanitize_plain_text($value)
     {
         $value = trim((string) $value);
@@ -733,3 +590,5 @@ class Auth_service
         return is_string($value) ? trim($value) : '';
     }
 }
+
+

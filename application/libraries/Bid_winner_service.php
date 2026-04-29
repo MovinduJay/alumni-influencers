@@ -1,14 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Coordinates winner selection and bidder notifications.
- */
 class Bid_winner_service
 {
-    /**
-     * @var CI_Controller
-     */
     protected $CI;
 
     public function __construct()
@@ -19,12 +13,6 @@ class Bid_winner_service
         $this->CI->load->library('email');
     }
 
-    /**
-     * Resolve the featured alumni for the target featured date and notify bidders.
-     *
-     * @param string $featured_date
-     * @return array
-     */
     public function resolve_for_date($featured_date)
     {
         $result = $this->CI->Bid_model->select_winner($featured_date);
@@ -48,13 +36,6 @@ class Bid_winner_service
         );
     }
 
-    /**
-     * Notify the winning bidder.
-     *
-     * @param object|null $alumni
-     * @param string $featured_date
-     * @return bool
-     */
     protected function notify_winner($alumni, $featured_date)
     {
         if (!$alumni) {
@@ -77,12 +58,6 @@ class Bid_winner_service
         return send_email_safely($this->CI->email);
     }
 
-    /**
-     * Notify all losing bidders for a date.
-     *
-     * @param string $bid_date
-     * @return array
-     */
     protected function notify_losers($bid_date)
     {
         $this->CI->db->where('bid_date', $bid_date);
@@ -125,3 +100,5 @@ class Bid_winner_service
         );
     }
 }
+
+

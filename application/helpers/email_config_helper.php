@@ -1,21 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Shared SMTP / email configuration helper
- *
- * Centralises the SMTP settings that were previously duplicated
- * across Auth, Bidding, and Cron controllers.
- */
-
 if (!function_exists('get_smtp_config')) {
-    /**
-     * Return the common SMTP configuration array for CI's email library.
-     *
-     * @return array
-     */
     function get_smtp_config()
     {
+        // One place for SMTP settings used by verification, reset and bid emails.
         return array(
             'protocol'  => 'smtp',
             'smtp_host' => getenv('SMTP_HOST') ?: 'smtp.gmail.com',
@@ -33,12 +22,6 @@ if (!function_exists('get_smtp_config')) {
 }
 
 if (!function_exists('send_email_safely')) {
-    /**
-     * Send email while gracefully handling unreachable SMTP sockets.
-     *
-     * @param CI_Email $email
-     * @return bool
-     */
     function send_email_safely($email)
     {
         $config = get_smtp_config();
@@ -51,6 +34,7 @@ if (!function_exists('send_email_safely')) {
             $crypto = strtolower((string)($config['smtp_crypto'] ?? ''));
 
             if ($host !== '' && $port > 0) {
+                // Fail fast when SMTP is not reachable instead of hanging the page.
                 $socket_host = ($crypto === 'ssl' ? 'ssl://' : '') . $host;
                 $errno = 0;
                 $errstr = '';
@@ -68,11 +52,6 @@ if (!function_exists('send_email_safely')) {
 }
 
 if (!function_exists('get_smtp_from')) {
-    /**
-     * Return the "From" address and name for outgoing emails.
-     *
-     * @return array ['email' => …, 'name' => …]
-     */
     function get_smtp_from()
     {
         return array(
@@ -81,3 +60,4 @@ if (!function_exists('get_smtp_from')) {
         );
     }
 }
+

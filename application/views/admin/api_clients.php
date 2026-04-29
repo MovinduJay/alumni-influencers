@@ -1,6 +1,5 @@
 <h3><i class="fas fa-key"></i> API Client Management</h3>
 
-<!-- New Client Keys Display -->
 <?php $new_client = $this->session->flashdata('new_client'); ?>
 <?php if ($new_client): ?>
 <div class="alert alert-warning">
@@ -13,7 +12,6 @@
 </div>
 <?php endif; ?>
 
-<!-- Create New Client -->
 <div class="card mb-4">
     <div class="card-header"><h5 class="mb-0"><i class="fas fa-plus"></i> Register New API Client</h5></div>
     <div class="card-body">
@@ -45,7 +43,6 @@
     </div>
 </div>
 
-<!-- Existing Clients -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Registered API Clients</h5>

@@ -1,17 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Shared admin orchestration service.
- *
- * Keeps API-client management and winner-selection business logic out of the
- * web and JSON controllers so those controllers remain transport-focused.
- */
 class Admin_service
 {
-    /**
-     * @var CI_Controller
-     */
     protected $CI;
 
     public function __construct()
@@ -22,22 +13,11 @@ class Admin_service
         $this->CI->load->library('bid_winner_service');
     }
 
-    /**
-     * List every configured API client.
-     *
-     * @return array
-     */
     public function get_api_clients()
     {
         return $this->CI->Api_client_model->get_all_clients();
     }
 
-    /**
-     * Validate an admin scope selection.
-     *
-     * @param string $scope
-     * @return array
-     */
     public function validate_scope_selection($scope)
     {
         $scope = $this->normalize_scope_or_default($scope);
@@ -54,13 +34,6 @@ class Admin_service
         );
     }
 
-    /**
-     * Create a new API client with normalized scopes.
-     *
-     * @param string $client_name
-     * @param string $scope
-     * @return array
-     */
     public function create_api_client($client_name, $scope)
     {
         $client_name = trim((string) $client_name);
@@ -101,13 +74,6 @@ class Admin_service
         );
     }
 
-    /**
-     * Update an API client's activation state.
-     *
-     * @param int $client_id
-     * @param bool $is_active
-     * @return array
-     */
     public function set_api_client_active($client_id, $is_active)
     {
         $ok = $is_active
@@ -131,44 +97,21 @@ class Admin_service
         );
     }
 
-    /**
-     * Retrieve access logs for one API client.
-     *
-     * @param int $client_id
-     * @return array
-     */
     public function get_api_client_logs($client_id)
     {
         return $this->CI->Api_client_model->get_client_logs($client_id);
     }
 
-    /**
-     * Retrieve the API statistics dashboard payload.
-     *
-     * @return array
-     */
     public function get_api_usage_stats()
     {
         return $this->CI->Api_client_model->get_usage_stats();
     }
 
-    /**
-     * Retrieve recent Alumni of the Day winners.
-     *
-     * @param int $days
-     * @return array
-     */
     public function get_recent_featured_alumni($days = 30)
     {
         return $this->CI->Bid_model->get_featured_last_days($days);
     }
 
-    /**
-     * Manually resolve the featured alumni winner for a date.
-     *
-     * @param string $featured_date
-     * @return array
-     */
     public function select_winner($featured_date)
     {
         $featured_date = trim((string) $featured_date);
@@ -204,12 +147,6 @@ class Admin_service
         );
     }
 
-    /**
-     * Return the normalized scope string or the configured default.
-     *
-     * @param string $scope
-     * @return string
-     */
     protected function normalize_scope_or_default($scope)
     {
         $scope = trim((string) $scope);
@@ -220,12 +157,6 @@ class Admin_service
         return $this->CI->Api_client_model->normalize_scope($scope);
     }
 
-    /**
-     * Find one API client by id from the list payload used by the UI and API.
-     *
-     * @param int $client_id
-     * @return object|null
-     */
     protected function find_client($client_id)
     {
         foreach ($this->get_api_clients() as $client) {
@@ -237,15 +168,11 @@ class Admin_service
         return NULL;
     }
 
-    /**
-     * Validate a YYYY-MM-DD date string.
-     *
-     * @param string $date
-     * @return bool
-     */
     protected function valid_date($date)
     {
         $dt = DateTime::createFromFormat('Y-m-d', $date);
         return $dt && $dt->format('Y-m-d') === $date;
     }
 }
+
+

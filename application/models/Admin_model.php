@@ -1,11 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Admin_model
- *
- * Handles administrator identity from the shared users table.
- */
 class Admin_model extends CI_Model
 {
     public function __construct()
@@ -31,3 +26,5 @@ class Admin_model extends CI_Model
         ))->row();
     }
 }
+
+

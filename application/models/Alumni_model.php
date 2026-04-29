@@ -1,13 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Alumni_model
- *
- * Handles alumni accounts using the normalized users/alumni subtype model.
- * Public methods return the same shape the controllers expect: id, email,
- * first_name, last_name, auth flags, and alumni profile fields together.
- */
 class Alumni_model extends CI_Model
 {
     public function __construct()
@@ -256,3 +249,5 @@ class Alumni_model extends CI_Model
             ->join('alumni', 'alumni.id = users.id', 'inner');
     }
 }
+
+

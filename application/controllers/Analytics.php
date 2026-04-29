@@ -1,12 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Analytics Controller
- *
- * Hosts the University Analytics Dashboard client and report/export actions.
- * The chart data itself is loaded from bearer-token protected API endpoints.
- */
 class Analytics extends MY_Admin_Controller
 {
     public function __construct()
@@ -165,9 +159,6 @@ class Analytics extends MY_Admin_Controller
         $this->output->set_output($pdf);
     }
 
-    /**
-     * Generate a compact text-only PDF without external dependencies.
-     */
     private function simple_pdf($lines)
     {
         $content = "BT\n/F1 12 Tf\n50 780 Td\n";
@@ -203,3 +194,5 @@ class Analytics extends MY_Admin_Controller
         return $pdf;
     }
 }
+
+

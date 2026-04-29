@@ -1,11 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Docs Controller
- *
- * Serves the Swagger/OpenAPI documentation UI for the public API.
- */
 class Docs extends CI_Controller
 {
     public function index()
@@ -485,4 +480,6 @@ class Docs extends CI_Controller
         );
     }
 }
+
+
 

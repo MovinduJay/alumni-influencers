@@ -1,12 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Api_client_model
- *
- * Handles API client management including bearer tokens,
- * access logging, and usage statistics.
- */
 class Api_client_model extends CI_Model
 {
     public function __construct()
@@ -14,13 +8,6 @@ class Api_client_model extends CI_Model
         $this->load->database();
     }
 
-    /**
-     * Create a new API client with generated keys
-     *
-     * @param string $client_name Name of the client application
-     * @param string $scope       Comma-separated scopes (e.g., read:alumni,read:analytics)
-     * @return array Client data with api_key and bearer_token
-     */
     public function create_client($client_name, $scope = 'read:alumni,read:analytics')
     {
         $scope = $this->normalize_scope($scope);
@@ -59,12 +46,6 @@ class Api_client_model extends CI_Model
         );
     }
 
-    /**
-     * Validate a bearer token
-     *
-     * @param string $token Bearer token from request header
-     * @return object|null Client record or null
-     */
     public function validate_token($token)
     {
         $hashed = hash('sha256', $token);
@@ -80,12 +61,6 @@ class Api_client_model extends CI_Model
         return $client;
     }
 
-    /**
-     * Normalize comma-separated scopes into stable sorted form.
-     *
-     * @param string $scope
-     * @return string
-     */
     public function normalize_scope($scope)
     {
         $parts = $this->scope_string_to_array($scope);
@@ -93,12 +68,6 @@ class Api_client_model extends CI_Model
         return implode(',', $parts);
     }
 
-    /**
-     * Parse a scope string into a unique array.
-     *
-     * @param string $scope
-     * @return array
-     */
     public function scope_string_to_array($scope)
     {
         $parts = array_map('trim', explode(',', (string) $scope));
@@ -107,12 +76,6 @@ class Api_client_model extends CI_Model
         })));
     }
 
-    /**
-     * Check whether the requested scope combination is supported.
-     *
-     * @param string $scope
-     * @return bool
-     */
     public function is_allowed_scope_set($scope)
     {
         $scope = $this->normalize_scope($scope);
@@ -142,12 +105,6 @@ class Api_client_model extends CI_Model
         return in_array($scope, $normalized_allowed_scopes, TRUE);
     }
 
-    /**
-     * Get normalized scope names for a client.
-     *
-     * @param int $client_id
-     * @return array
-     */
     public function get_client_scope_names($client_id)
     {
         if (!$this->has_scope_tables()) {
@@ -172,13 +129,6 @@ class Api_client_model extends CI_Model
         return $scopes;
     }
 
-    /**
-     * Persist the scopes assigned to a client.
-     *
-     * @param int $client_id
-     * @param string $scope
-     * @return void
-     */
     protected function assign_scopes($client_id, $scope)
     {
         if (!$this->has_scope_tables()) {
@@ -200,11 +150,6 @@ class Api_client_model extends CI_Model
         }
     }
 
-    /**
-     * Get all API clients
-     *
-     * @return array List of clients
-     */
     public function get_all_clients()
     {
         if (!$this->has_scope_tables()) {
@@ -221,39 +166,18 @@ class Api_client_model extends CI_Model
         return $this->db->get()->result();
     }
 
-    /**
-     * Revoke an API client's access
-     *
-     * @param int $client_id Client ID
-     * @return bool
-     */
     public function revoke_client($client_id)
     {
         $this->db->where('id', $client_id);
         return $this->db->update('api_clients', array('is_active' => 0));
     }
 
-    /**
-     * Reactivate an API client
-     *
-     * @param int $client_id Client ID
-     * @return bool
-     */
     public function activate_client($client_id)
     {
         $this->db->where('id', $client_id);
         return $this->db->update('api_clients', array('is_active' => 1));
     }
 
-    /**
-     * Log an API access
-     *
-     * @param int    $client_id  Client ID
-     * @param string $endpoint   Endpoint accessed
-     * @param string $method     HTTP method
-     * @param string $ip_address Client IP address
-     * @return bool
-     */
     public function log_access($client_id, $endpoint, $method, $ip_address)
     {
         return $this->db->insert('api_access_logs', array(
@@ -264,13 +188,6 @@ class Api_client_model extends CI_Model
         ));
     }
 
-    /**
-     * Get access logs for a specific client
-     *
-     * @param int $client_id Client ID
-     * @param int $limit     Number of records to return
-     * @return array Access logs
-     */
     public function get_client_logs($client_id, $limit = 100)
     {
         $this->db->where('api_client_id', $client_id);
@@ -279,11 +196,6 @@ class Api_client_model extends CI_Model
         return $this->db->get('api_access_logs')->result();
     }
 
-    /**
-     * Get usage statistics for all clients
-     *
-     * @return array Statistics data
-     */
     public function get_usage_stats()
     {
         if (!$this->has_scope_tables()) {
@@ -344,13 +256,10 @@ class Api_client_model extends CI_Model
         );
     }
 
-    /**
-     * Determine whether the normalized API scope tables exist in this database.
-     *
-     * @return bool
-     */
     protected function has_scope_tables()
     {
         return $this->db->table_exists('api_scopes') && $this->db->table_exists('api_client_scopes');
     }
 }
+
+

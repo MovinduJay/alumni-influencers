@@ -1,13 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Analytics_model
- *
- * Builds filtered, aggregate alumni intelligence datasets for the university
- * dashboard. Query construction is centralized here so the API, exports, and
- * report pages all use the same validated filters and business definitions.
- */
 class Analytics_model extends CI_Model
 {
     public function __construct()
@@ -26,6 +19,7 @@ class Analytics_model extends CI_Model
 
     public function normalize_filters($input)
     {
+        // Clean filter input once so the dashboard, API and exports use the same values.
         $filters = array(
             'programme_id' => $this->positive_int(isset($input['programme_id']) ? $input['programme_id'] : NULL),
             'industry_sector_id' => $this->positive_int(isset($input['industry_sector_id']) ? $input['industry_sector_id'] : NULL),
@@ -37,6 +31,7 @@ class Analytics_model extends CI_Model
 
         if ($filters['graduation_from'] && $filters['graduation_to']
             && strtotime($filters['graduation_from']) > strtotime($filters['graduation_to'])) {
+            // If the dates are entered the wrong way round, still return a useful result.
             $swap = $filters['graduation_from'];
             $filters['graduation_from'] = $filters['graduation_to'];
             $filters['graduation_to'] = $swap;
@@ -228,6 +223,7 @@ class Analytics_model extends CI_Model
 
     protected function base_query($filters)
     {
+        // Common query used by all analytics charts to avoid different filter results.
         $this->db->reset_query();
         $this->db->from('alumni');
         $this->db->join('users', 'users.id = alumni.id', 'inner');
@@ -305,3 +301,5 @@ class Analytics_model extends CI_Model
         return substr($value, 0, 80);
     }
 }
+
+

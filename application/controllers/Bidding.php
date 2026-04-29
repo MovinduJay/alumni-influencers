@@ -1,11 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Bidding Controller
- *
- * Implements the blind bidding system for Alumni of the Day feature.
- */
 class Bidding extends MY_Authenticated_Controller
 {
     public function __construct()
@@ -17,9 +12,6 @@ class Bidding extends MY_Authenticated_Controller
         $this->load->library('bid_winner_service');
     }
 
-    /**
-     * Bidding dashboard - shows current bid status and sponsorship context.
-     */
     public function index()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -51,9 +43,6 @@ class Bidding extends MY_Authenticated_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Place a new bid backed by accepted sponsorships.
-     */
     public function place()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -121,11 +110,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding');
     }
 
-    /**
-     * Update an existing bid (increase only, and not beyond sponsorship budget).
-     *
-     * @param int $bid_id
-     */
     public function update_bid($bid_id)
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -178,9 +162,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding');
     }
 
-    /**
-     * Bid history page.
-     */
     public function history()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -194,9 +175,6 @@ class Bidding extends MY_Authenticated_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Sponsorship management page.
-     */
     public function sponsorships()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -211,9 +189,6 @@ class Bidding extends MY_Authenticated_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Add a sponsorship offer.
-     */
     public function add_sponsorship()
     {
         if ($this->input->method() !== 'post') {
@@ -243,11 +218,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding/sponsorships');
     }
 
-    /**
-     * Update sponsorship status.
-     *
-     * @param int $id
-     */
     public function update_sponsorship($id)
     {
         if ($this->input->method() !== 'post') {
@@ -274,11 +244,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding/sponsorships');
     }
 
-    /**
-     * Delete a sponsorship.
-     *
-     * @param int $id
-     */
     public function delete_sponsorship($id)
     {
         if ($this->input->method() !== 'post') {
@@ -292,9 +257,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding/sponsorships');
     }
 
-    /**
-     * Event participation management page.
-     */
     public function events()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -309,9 +271,6 @@ class Bidding extends MY_Authenticated_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Record alumni event participation.
-     */
     public function add_event()
     {
         if ($this->input->method() !== 'post') {
@@ -339,11 +298,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding/events');
     }
 
-    /**
-     * Delete an event participation.
-     *
-     * @param int $id
-     */
     public function delete_event($id)
     {
         if ($this->input->method() !== 'post') {
@@ -357,12 +311,6 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding/events');
     }
 
-    /**
-     * Validate bid/event date format (YYYY-MM-DD).
-     *
-     * @param string $bid_date
-     * @return bool
-     */
     public function validate_bid_date($bid_date)
     {
         $dt = DateTime::createFromFormat('Y-m-d', (string) $bid_date);
@@ -374,9 +322,6 @@ class Bidding extends MY_Authenticated_Controller
         return TRUE;
     }
 
-    /**
-     * Manual winner selection trigger.
-     */
     public function select_winner()
     {
         if (!is_cli()) {
@@ -397,3 +342,5 @@ class Bidding extends MY_Authenticated_Controller
         redirect('bidding');
     }
 }
+
+

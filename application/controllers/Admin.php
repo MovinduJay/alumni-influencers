@@ -1,19 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Admin Controller
- *
- * Manages API clients, bearer tokens, and usage statistics.
- * Provides ability to create clients, revoke tokens, and view access logs.
- *
- * Requires authenticated session with admin role.
- */
 class Admin extends MY_Admin_Controller
 {
-    /**
-     * Constructor - verify authentication and admin role
-     */
     public function __construct()
     {
         parent::__construct();
@@ -21,9 +10,6 @@ class Admin extends MY_Admin_Controller
         $this->load->library('form_validation');
     }
 
-    /**
-     * Admin landing page.
-     */
     public function index()
     {
         $stats = $this->admin_service->get_api_usage_stats();
@@ -38,9 +24,6 @@ class Admin extends MY_Admin_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * List all API clients
-     */
     public function api_clients()
     {
         $data = array(
@@ -53,9 +36,6 @@ class Admin extends MY_Admin_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Create a new API client
-     */
     public function create_client()
     {
         if ($this->input->method() === 'post') {
@@ -86,12 +66,6 @@ class Admin extends MY_Admin_Controller
         }
     }
 
-    /**
-     * Validate supported API scope combinations.
-     *
-     * @param string $scope
-     * @return bool
-     */
     public function validate_scope($scope)
     {
         $validation = $this->admin_service->validate_scope_selection($scope);
@@ -102,11 +76,6 @@ class Admin extends MY_Admin_Controller
         return TRUE;
     }
 
-    /**
-     * Revoke an API client's access
-     *
-     * @param int $client_id Client ID
-     */
     public function revoke_client($client_id)
     {
         if ($this->input->method() !== 'post') {
@@ -118,11 +87,6 @@ class Admin extends MY_Admin_Controller
         redirect('admin/api-clients');
     }
 
-    /**
-     * View access logs for a specific client
-     *
-     * @param int $client_id Client ID
-     */
     public function client_logs($client_id)
     {
         $data = array(
@@ -135,9 +99,6 @@ class Admin extends MY_Admin_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * View recent Alumni of the Day winners.
-     */
     public function featured_alumni()
     {
         $data = array(
@@ -150,11 +111,10 @@ class Admin extends MY_Admin_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * API usage statistics dashboard
-     */
     public function api_stats()
     {
         redirect('admin');
     }
 }
+
+

@@ -1,12 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Shared application controller utilities.
- *
- * Centralizes session timeout enforcement and auth/role gates so
- * feature controllers stay focused on request handling.
- */
 class MY_Controller extends CI_Controller
 {
     public function __construct()
@@ -15,9 +9,6 @@ class MY_Controller extends CI_Controller
         $this->enforce_idle_timeout();
     }
 
-    /**
-     * Enforce an inactivity timeout for authenticated sessions.
-     */
     protected function enforce_idle_timeout()
     {
         if (!$this->session->userdata('logged_in')) {
@@ -49,11 +40,6 @@ class MY_Controller extends CI_Controller
         $this->session->set_userdata('last_activity', time());
     }
 
-    /**
-     * Require an authenticated session.
-     *
-     * @param string $message
-     */
     protected function require_auth($message = 'Please log in to continue.')
     {
         if ($this->session->userdata('logged_in')) {
@@ -64,12 +50,6 @@ class MY_Controller extends CI_Controller
         redirect('auth/login');
     }
 
-    /**
-     * Require auth except for allowlisted public methods.
-     *
-     * @param array $public_methods
-     * @param string $message
-     */
     protected function require_auth_except(array $public_methods, $message = 'Please log in to continue.')
     {
         $method = $this->get_current_method();
@@ -80,9 +60,6 @@ class MY_Controller extends CI_Controller
         $this->require_auth($message);
     }
 
-    /**
-     * Require an authenticated admin session.
-     */
     protected function require_admin()
     {
         $this->require_auth('Please log in to access admin features.');
@@ -94,9 +71,6 @@ class MY_Controller extends CI_Controller
         show_error('Access denied. Admin privileges required.', 403);
     }
 
-    /**
-     * Require an authenticated alumni session.
-     */
     protected function require_alumni()
     {
         $this->require_auth('Please log in to access alumni features.');
@@ -108,11 +82,6 @@ class MY_Controller extends CI_Controller
         show_error('Access denied. Alumni account required.', 403);
     }
 
-    /**
-     * Resolve the current controller method across CI router variants.
-     *
-     * @return string
-     */
     protected function get_current_method()
     {
         if (is_object($this->router) && method_exists($this->router, 'fetch_method')) {
@@ -144,3 +113,5 @@ class MY_Admin_Controller extends MY_Controller
         $this->require_admin();
     }
 }
+
+

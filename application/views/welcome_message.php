@@ -8,7 +8,6 @@
     </div>
 </div>
 
-<!-- Today's Featured Alumni -->
 <div class="row justify-content-center mb-5">
     <div class="col-md-8">
         <div class="card border-primary">
@@ -41,7 +40,6 @@
     </div>
 </div>
 
-<!-- Platform Features -->
 <div class="row">
     <div class="col-md-4">
         <div class="card text-center">
@@ -72,7 +70,7 @@
             <div class="card-body">
                 <i class="fas fa-code fa-3x text-success mb-3"></i>
                 <h4>Developer API</h4>
-                <p class="text-muted">Access alumni data through our RESTful API with comprehensive Swagger documentation.</p>
+                <p class="text-muted">Access alumni data through the REST API and Swagger documentation.</p>
                 <a href="<?php echo site_url('api-docs'); ?>" class="btn btn-success">View API Docs</a>
             </div>
         </div>

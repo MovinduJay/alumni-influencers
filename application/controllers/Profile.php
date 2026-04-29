@@ -1,19 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Profile Controller
- *
- * Manages alumni profiles including personal information, degrees,
- * certifications, licences, courses, employment history, and image uploads.
- *
- * All endpoints require authentication (logged-in session).
- */
 class Profile extends MY_Controller
 {
-    /**
-     * Constructor - verify authentication and load models
-     */
     public function __construct()
     {
         parent::__construct();
@@ -21,13 +10,10 @@ class Profile extends MY_Controller
         $this->load->model('Profile_model');
         $this->load->library('form_validation');
 
-        // Public profile viewing is allowed; edit/manage actions require auth.
+        // Anyone can view a public profile, but editing must stay behind login.
         $this->require_auth_except(array('view'), 'Please log in to access your profile.');
     }
 
-    /**
-     * Profile dashboard - shows complete profile
-     */
     public function index()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -41,9 +27,6 @@ class Profile extends MY_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Edit basic profile information (name, bio, LinkedIn URL)
-     */
     public function edit()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -74,7 +57,7 @@ class Profile extends MY_Controller
 
             $this->Alumni_model->update($alumni_id, $update_data);
 
-            // Update session data
+            // Keep the navbar name in sync after editing the profile.
             $this->session->set_userdata('first_name', $update_data['first_name']);
             $this->session->set_userdata('last_name', $update_data['last_name']);
 
@@ -91,11 +74,6 @@ class Profile extends MY_Controller
         }
     }
 
-    /**
-     * View any alumni's public profile
-     *
-     * @param int $id Alumni ID
-     */
     public function view($id)
     {
         $profile = $this->Alumni_model->get_full_profile($id);
@@ -115,12 +93,6 @@ class Profile extends MY_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Profile image upload handler
-     *
-     * Validates file extension, MIME type, and actual image content
-     * (getimagesize) to prevent disguised non-image uploads.
-     */
     public function image_upload()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -157,7 +129,7 @@ class Profile extends MY_Controller
 
         $upload_data = $this->upload->data();
 
-        // Harden: verify the file is a genuine image via getimagesize()
+        // Extension checks are not enough, so confirm PHP can read it as an image.
         $image_info = @getimagesize($upload_data['full_path']);
         if ($image_info === FALSE) {
             @unlink($upload_data['full_path']);
@@ -166,7 +138,7 @@ class Profile extends MY_Controller
             return;
         }
 
-        // Harden: check MIME type from actual content matches allowed types
+        // Use the detected MIME type, not only the filename extension.
         $allowed_mimes = array('image/gif', 'image/jpeg', 'image/png');
         if (!in_array($image_info['mime'], $allowed_mimes, TRUE)) {
             @unlink($upload_data['full_path']);
@@ -175,7 +147,7 @@ class Profile extends MY_Controller
             return;
         }
 
-        // Delete old profile image if exists (basename prevents path traversal)
+        // basename keeps the delete inside the upload folder.
         $alumni = $this->Alumni_model->find_by_id($alumni_id);
         $old_file = $alumni && $alumni->profile_image ? rtrim($upload_path, '/\\') . DIRECTORY_SEPARATOR . basename($alumni->profile_image) : NULL;
         if ($old_file && is_file($old_file)) {
@@ -190,12 +162,6 @@ class Profile extends MY_Controller
         redirect('profile');
     }
 
-    /**
-     * URL validation callback
-     *
-     * @param string $url URL to validate
-     * @return bool
-     */
     public function validate_url($url)
     {
         if (empty($url)) return TRUE;
@@ -206,12 +172,6 @@ class Profile extends MY_Controller
         return TRUE;
     }
 
-    /**
-     * Validate optional date fields (YYYY-MM-DD).
-     *
-     * @param string $date
-     * @return bool
-     */
     public function validate_optional_date($date)
     {
         if ($date === NULL || trim($date) === '') {
@@ -226,12 +186,6 @@ class Profile extends MY_Controller
         return TRUE;
     }
 
-    /**
-     * Validate required date fields (YYYY-MM-DD).
-     *
-     * @param string $date
-     * @return bool
-     */
     public function validate_required_date($date)
     {
         if ($date === NULL || trim($date) === '') {
@@ -241,12 +195,6 @@ class Profile extends MY_Controller
         return $this->validate_optional_date($date);
     }
 
-    /**
-     * Validate end_date format and chronology (end_date >= start_date).
-     *
-     * @param string $end_date
-     * @return bool
-     */
     public function validate_end_date($end_date)
     {
         if (!$this->validate_optional_date($end_date)) {
@@ -267,13 +215,8 @@ class Profile extends MY_Controller
         return TRUE;
     }
 
-    // =========================================================================
-    // DEGREES CRUD
-    // =========================================================================
+    // Degree records for the logged-in alumni.
 
-    /**
-     * List all degrees for current alumni
-     */
     public function degrees()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -286,9 +229,6 @@ class Profile extends MY_Controller
         $this->load->view('layouts/footer');
     }
 
-    /**
-     * Add a new degree
-     */
     public function add_degree()
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -325,11 +265,6 @@ class Profile extends MY_Controller
         }
     }
 
-    /**
-     * Edit a degree
-     *
-     * @param int $id Degree ID
-     */
     public function edit_degree($id)
     {
         $alumni_id = $this->session->userdata('alumni_id');
@@ -371,11 +306,6 @@ class Profile extends MY_Controller
         }
     }
 
-    /**
-     * Delete a degree
-     *
-     * @param int $id Degree ID
-     */
     public function delete_degree($id)
     {
         if ($this->input->method() !== 'post') {
@@ -388,9 +318,7 @@ class Profile extends MY_Controller
         redirect('profile/degrees');
     }
 
-    // =========================================================================
-    // CERTIFICATIONS CRUD
-    // =========================================================================
+    // Certification records for the logged-in alumni.
 
     public function certifications()
     {
@@ -493,9 +421,7 @@ class Profile extends MY_Controller
         redirect('profile/certifications');
     }
 
-    // =========================================================================
-    // LICENCES CRUD
-    // =========================================================================
+    // Licence records for the logged-in alumni.
 
     public function licences()
     {
@@ -598,9 +524,7 @@ class Profile extends MY_Controller
         redirect('profile/licences');
     }
 
-    // =========================================================================
-    // COURSES CRUD
-    // =========================================================================
+    // Course records for the logged-in alumni.
 
     public function courses()
     {
@@ -703,9 +627,7 @@ class Profile extends MY_Controller
         redirect('profile/courses');
     }
 
-    // =========================================================================
-    // EMPLOYMENT HISTORY CRUD
-    // =========================================================================
+    // Employment history records for the logged-in alumni.
 
     public function employment()
     {
@@ -808,4 +730,6 @@ class Profile extends MY_Controller
         redirect('profile/employment');
     }
 }
+
+
 

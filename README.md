@@ -85,7 +85,7 @@ The project combines a server-rendered web interface with a documented REST API.
 The application uses a layered MVC structure:
 
 - `controllers`
-  - request handling and response orchestration
+  - request handling and response setup
 - `models`
   - persistence and database query logic
 - `views`

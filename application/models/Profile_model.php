@@ -1,12 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Profile_model
- *
- * Handles CRUD operations for all profile sub-sections:
- * degrees, certifications, licences, courses, and employment history.
- */
 class Profile_model extends CI_Model
 {
     public function __construct()
@@ -14,64 +8,30 @@ class Profile_model extends CI_Model
         $this->load->database();
     }
 
-    // =========================================================================
-    // DEGREES
-    // =========================================================================
+    // Profile tables are kept separate so each section can be edited alone.
 
-    /**
-     * Add a degree record
-     *
-     * @param array $data Degree data
-     * @return int Insert ID
-     */
     public function add_degree($data)
     {
         $this->db->insert('degrees', $data);
         return $this->db->insert_id();
     }
 
-    /**
-     * Get a specific degree
-     *
-     * @param int $id Degree ID
-     * @return object|null
-     */
     public function get_degree($id)
     {
         return $this->db->get_where('degrees', array('id' => $id))->row();
     }
 
-    /**
-     * Get all degrees for an alumni
-     *
-     * @param int $alumni_id Alumni ID
-     * @return array
-     */
     public function get_degrees($alumni_id)
     {
         return $this->db->get_where('degrees', array('alumni_id' => $alumni_id))->result();
     }
 
-    /**
-     * Update a degree record
-     *
-     * @param int   $id   Degree ID
-     * @param array $data Data to update
-     * @return bool
-     */
     public function update_degree($id, $data)
     {
         $this->db->where('id', $id);
         return $this->db->update('degrees', $data);
     }
 
-    /**
-     * Delete a degree record
-     *
-     * @param int $id        Degree ID
-     * @param int $alumni_id Alumni ID (for ownership verification)
-     * @return bool
-     */
     public function delete_degree($id, $alumni_id)
     {
         $this->db->where('id', $id);
@@ -79,9 +39,7 @@ class Profile_model extends CI_Model
         return $this->db->delete('degrees');
     }
 
-    // =========================================================================
-    // CERTIFICATIONS
-    // =========================================================================
+    // Certifications use the same ownership pattern as degrees.
 
     public function add_certification($data)
     {
@@ -112,9 +70,7 @@ class Profile_model extends CI_Model
         return $this->db->delete('certifications');
     }
 
-    // =========================================================================
-    // LICENCES
-    // =========================================================================
+    // Licences are stored separately for clearer profile display.
 
     public function add_licence($data)
     {
@@ -145,9 +101,7 @@ class Profile_model extends CI_Model
         return $this->db->delete('licences');
     }
 
-    // =========================================================================
-    // COURSES
-    // =========================================================================
+    // Short courses are tracked apart from full degrees.
 
     public function add_course($data)
     {
@@ -178,9 +132,7 @@ class Profile_model extends CI_Model
         return $this->db->delete('courses');
     }
 
-    // =========================================================================
-    // EMPLOYMENT HISTORY
-    // =========================================================================
+    // Employment history is ordered newest first in the profile page.
 
     public function add_employment($data)
     {
@@ -213,3 +165,5 @@ class Profile_model extends CI_Model
         return $this->db->delete('employment_history');
     }
 }
+
+

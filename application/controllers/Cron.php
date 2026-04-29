@@ -1,25 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Cron Controller
- *
- * CLI-only controller for scheduled tasks.
- * Intended to be called via system cron jobs.
- *
- * Usage (crontab):
- *   # Finalize today's featured alumnus just after midnight
- *   5 0 * * * /usr/bin/php /path/to/index.php cron select_winner
- *
- * Manual usage:
- *   php index.php cron select_winner
- *   php index.php cron select_winner 2026-03-15
- */
 class Cron extends CI_Controller
 {
-    /**
-     * Constructor - restrict to CLI access only
-     */
     public function __construct()
     {
         parent::__construct();
@@ -31,13 +14,6 @@ class Cron extends CI_Controller
         $this->load->library('bid_winner_service');
     }
 
-    /**
-     * Select featured alumni for a target date.
-     *
-     * Defaults to today when no date is provided.
-     *
-     * @param string|null $featured_date
-     */
     public function select_winner($featured_date = NULL)
     {
         if ($featured_date === NULL || $featured_date === '') {
@@ -80,3 +56,5 @@ class Cron extends CI_Controller
         echo '; loser emails failed: ' . $loser_results['failed'] . "\n";
     }
 }
+
+

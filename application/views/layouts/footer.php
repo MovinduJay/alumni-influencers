@@ -1,4 +1,4 @@
-    </div><!-- /.container-fluid -->
+    </div>
 
     <footer class="footer mt-5">
         <div class="container-fluid px-3 text-center">

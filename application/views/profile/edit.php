@@ -5,7 +5,6 @@
                 <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Profile</h4>
             </div>
             <div class="card-body">
-                <!-- Profile Image Upload -->
                 <div class="text-center mb-4">
                     <?php if (!empty($alumni->profile_image)): ?>
                         <img src="<?php echo base_url('uploads/profile_images/' . htmlspecialchars($alumni->profile_image, ENT_QUOTES, 'UTF-8')); ?>"
@@ -29,7 +28,6 @@
 
                 <hr>
 
-                <!-- Profile Form -->
                 <?php echo form_open('profile/edit'); ?>
 
                     <div class="row">

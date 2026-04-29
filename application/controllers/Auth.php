@@ -1,13 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Auth Controller
- *
- * Handles the web authentication flow while delegating the security-critical
- * business rules to Auth_service. This keeps the controller focused on form
- * validation, flash messages, redirects, and view rendering.
- */
 class Auth extends MY_Controller
 {
     public function __construct()
@@ -17,9 +10,6 @@ class Auth extends MY_Controller
         $this->load->library('form_validation');
     }
 
-    /**
-     * Registration page and handler.
-     */
     public function register()
     {
         if ($this->input->method() !== 'post') {
@@ -61,12 +51,6 @@ class Auth extends MY_Controller
         redirect('auth/login');
     }
 
-    /**
-     * Form-validation callback that delegates the actual policy.
-     *
-     * @param string $password
-     * @return bool
-     */
     public function validate_password_strength($password)
     {
         $result = $this->auth_service->validate_password_strength($password);
@@ -78,11 +62,6 @@ class Auth extends MY_Controller
         return FALSE;
     }
 
-    /**
-     * Email verification handler.
-     *
-     * @param string $token
-     */
     public function verify($token)
     {
         if (empty($token)) {
@@ -102,9 +81,6 @@ class Auth extends MY_Controller
         redirect('auth/login');
     }
 
-    /**
-     * Login page and handler.
-     */
     public function login()
     {
         if ($this->session->userdata('admin_id')) {
@@ -161,18 +137,12 @@ class Auth extends MY_Controller
         redirect('profile');
     }
 
-    /**
-     * Logout handler.
-     */
     public function logout()
     {
         $this->session->sess_destroy();
         redirect('auth/login');
     }
 
-    /**
-     * Forgot-password page and handler.
-     */
     public function forgot_password()
     {
         if ($this->input->method() !== 'post') {
@@ -204,11 +174,6 @@ class Auth extends MY_Controller
         redirect('auth/forgot-password');
     }
 
-    /**
-     * Reset-password page and handler.
-     *
-     * @param string $token
-     */
     public function reset_password($token)
     {
         $verification = $this->auth_service->verify_reset_token($token);
@@ -253,13 +218,6 @@ class Auth extends MY_Controller
         redirect('auth/login');
     }
 
-    /**
-     * Render a standard auth view with the shared layout.
-     *
-     * @param string $view
-     * @param string $title
-     * @return void
-     */
     protected function render_view($view, $title)
     {
         $data = array('title' => $title);
@@ -268,3 +226,5 @@ class Auth extends MY_Controller
         $this->load->view('layouts/footer');
     }
 }
+
+
