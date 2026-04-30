@@ -296,3 +296,11 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     INDEX idx_attempted_at (attempted_at),
     INDEX idx_ip_action_attempted_at (ip_address, action, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Required API scope catalog values. These are lookup records, not demo seed data.
+INSERT IGNORE INTO api_scopes (name) VALUES
+('read:alumni'),
+('read:analytics'),
+('read:donations'),
+('read:alumni_of_day'),
+('write:alumni');

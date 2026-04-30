@@ -42,7 +42,7 @@ class Docs extends CI_Controller
                         'properties' => array(
                             'error' => array('type' => 'string', 'example' => 'Validation failed'),
                             'message' => array('type' => 'string', 'example' => 'amount must be greater than 0.'),
-                            'required_scope' => array('type' => 'string', 'example' => 'alumni:read')
+                            'required_scope' => array('type' => 'string', 'example' => 'read:alumni')
                         )
                     ),
                     'AlumniCreate' => array(
@@ -226,10 +226,10 @@ class Docs extends CI_Controller
     private function publicPaths()
     {
         return array(
-            '/featured/today' => array('get' => $this->simpleOp('Legacy', 'Legacy alias for today\'s featured alumnus', 'success', array('featured' => array('featured_date' => '2026-04-06', 'alumni_id' => 1)), array('BearerAuth' => array()))),
-            '/featured' => array('get' => $this->simpleOp('Legacy', 'Legacy alias for featured alumni collection', 'success', array('featured' => array(array('featured_date' => '2026-04-06', 'alumni_id' => 1))), array('BearerAuth' => array()))),
-            '/featured-alumni' => array('get' => $this->simpleOp('Featured Alumni', 'List featured alumni resources', 'success', array('featured_alumni' => array(array('featured_date' => '2026-04-06', 'alumni_id' => 1))), array('BearerAuth' => array()))),
-            '/featured-alumni/{date}' => array('get' => $this->simpleOp('Featured Alumni', 'Get a featured alumni resource by date', 'success', array('featured_alumnus' => array('featured_date' => '2026-04-06', 'alumni_id' => 1)), array('BearerAuth' => array()), TRUE)),
+            '/featured/today' => array('get' => $this->simpleOp('Alumni of the Day', 'Return today\'s Alumni of the Day. Requires read:alumni_of_day.', 'success', array('featured' => array('featured_date' => '2026-04-06', 'alumni_id' => 1)), array('BearerAuth' => array()))),
+            '/featured' => array('get' => $this->simpleOp('Alumni of the Day', 'List recent Alumni of the Day records. Requires read:alumni_of_day.', 'success', array('featured' => array(array('featured_date' => '2026-04-06', 'alumni_id' => 1))), array('BearerAuth' => array()))),
+            '/featured-alumni' => array('get' => $this->simpleOp('Featured Alumni', 'List featured alumni resources. Requires read:alumni_of_day.', 'success', array('featured_alumni' => array(array('featured_date' => '2026-04-06', 'alumni_id' => 1))), array('BearerAuth' => array()))),
+            '/featured-alumni/{date}' => array('get' => $this->simpleOp('Featured Alumni', 'Get a featured alumni resource by date. Requires read:alumni_of_day.', 'success', array('featured_alumnus' => array('featured_date' => '2026-04-06', 'alumni_id' => 1)), array('BearerAuth' => array()), TRUE)),
             '/alumni' => array(
                 'get' => $this->simpleOp('Alumni', 'List alumni resources', 'success', array('alumni' => array(array('id' => 1, 'first_name' => 'John', 'last_name' => 'Smith'))), array('BearerAuth' => array())),
                 'post' => $this->writeOp('Alumni', 'Create an alumni resource', '#/components/schemas/AlumniCreate', array('status' => 'created', 'message' => 'Alumni resource created successfully.', 'alumni' => array('id' => 5, 'email' => 'jane.doe@westminster.ac.uk')), array('BearerAuth' => array()))

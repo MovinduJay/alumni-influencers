@@ -140,6 +140,16 @@ class Api_client_model extends CI_Model
             $scopes = $this->scope_string_to_array('read:alumni,read:analytics');
         }
 
+        foreach ($scopes as $scope_name) {
+            $exists = $this->db
+                ->where('name', $scope_name)
+                ->count_all_results('api_scopes');
+
+            if ((int) $exists === 0) {
+                $this->db->insert('api_scopes', array('name' => $scope_name));
+            }
+        }
+
         $scope_rows = $this->db->where_in('name', $scopes)->get('api_scopes')->result();
 
         foreach ($scope_rows as $scope_row) {

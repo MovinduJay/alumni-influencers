@@ -23,9 +23,7 @@
                 <div class="col-md-4">
                     <select name="scope" class="form-select" required>
                         <option value="read:alumni,read:analytics">Analytics Dashboard (Recommended)</option>
-                        <option value="featured:read">Alumni of the Day / Featured Read</option>
                         <option value="read:alumni_of_day">Alumni of the Day Only</option>
-                        <option value="featured:read,alumni:read">Featured + Alumni Directory</option>
                         <option value="read:alumni_of_day,read:alumni">Alumni of the Day + Alumni Directory</option>
                         <option value="read:alumni_of_day,read:alumni,read:analytics">Full Read Client</option>
                         <option value="read:alumni">Alumni Read Only</option>
@@ -33,7 +31,7 @@
                         <option value="read:donations">Donation Read Only</option>
                         <option value="read:alumni,write:alumni">Alumni Read/Write</option>
                     </select>
-                    <small class="text-muted">Use Alumni of the Day / Featured Read for <code>/api/v1/featured/today</code>.</small>
+                    <small class="text-muted">Use Alumni of the Day Only for <code>/api/v1/featured/today</code>.</small>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus"></i> Create Client</button>

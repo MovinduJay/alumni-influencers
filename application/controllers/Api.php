@@ -1195,7 +1195,7 @@ class Api extends CI_Controller
             $this->_json_response(array('error' => 'Method not allowed'), 405);
             return;
         }
-        if (!$this->_require_scope('featured:read')) {
+        if (!$this->_require_scope('read:alumni_of_day')) {
             return;
         }
 
@@ -1238,7 +1238,7 @@ class Api extends CI_Controller
             $this->_json_response(array('error' => 'Method not allowed'), 405);
             return;
         }
-        if (!$this->_require_scope('featured:read')) {
+        if (!$this->_require_scope('read:alumni_of_day')) {
             return;
         }
 
@@ -1257,7 +1257,7 @@ class Api extends CI_Controller
             $this->_json_response(array('error' => 'Method not allowed'), 405);
             return;
         }
-        if (!$this->_require_scope('featured:read')) {
+        if (!$this->_require_scope('read:alumni_of_day')) {
             return;
         }
 
@@ -1291,7 +1291,7 @@ class Api extends CI_Controller
             $this->_json_response(array('error' => 'Method not allowed'), 405);
             return;
         }
-        if (!$this->_require_scope('featured:read')) {
+        if (!$this->_require_scope('read:alumni_of_day')) {
             return;
         }
 
@@ -1317,7 +1317,7 @@ class Api extends CI_Controller
         $method = $this->input->method();
 
         if ($method === 'get') {
-            if (!$this->_require_scope('alumni:read')) {
+            if (!$this->_require_scope('read:alumni')) {
                 return;
             }
 
@@ -1341,7 +1341,7 @@ class Api extends CI_Controller
         }
 
         if ($method === 'patch') {
-            if (!$this->_require_scope('alumni:write')) {
+            if (!$this->_require_scope('write:alumni')) {
                 return;
             }
 
@@ -1381,7 +1381,7 @@ class Api extends CI_Controller
         }
 
         if ($method === 'delete') {
-            if (!$this->_require_scope('alumni:write')) {
+            if (!$this->_require_scope('write:alumni')) {
                 return;
             }
 
@@ -1407,7 +1407,7 @@ class Api extends CI_Controller
         $method = $this->input->method();
 
         if ($method === 'get') {
-            if (!$this->_require_scope('alumni:read')) {
+            if (!$this->_require_scope('read:alumni')) {
                 return;
             }
 
@@ -1436,7 +1436,7 @@ class Api extends CI_Controller
         }
 
         if ($method === 'post') {
-            if (!$this->_require_scope('alumni:write')) {
+            if (!$this->_require_scope('write:alumni')) {
                 return;
             }
 

@@ -1,144 +1,39 @@
 # Alumni Influencers Platform
 
-Alumni Influencers Platform is a CodeIgniter 3 application for alumni identity, profile management, blind bidding, controlled API access, and university graduate-outcome analytics.
+Alumni Influencers Platform is a CodeIgniter 3 web application for alumni profile management, Alumni of the Day bidding, API-client management, and university analytics.
 
-The project combines a server-rendered web interface with a documented REST API. Shared login identity lives in `users`, while alumni-only profile data lives in the `alumni` subtype table. Alumni users can register, verify email addresses, manage professional profile data, participate in blind bidding for featured placement, and track sponsorships and event participation. Admin users are `users.user_type = 'admin'` and manage analytics, API clients, and API usage without being alumni influencers. External consumers can access public alumni and featured-alumni data through bearer-token protected endpoints.
+The system has two main user types:
 
-## Table of Contents
+- Alumni users manage their profile, qualifications, work history, bids, sponsorships, and events.
+- Admin users manage analytics, API clients, API usage, and featured-alumni workflows.
 
-- [Highlights](#highlights)
-- [Core Modules](#core-modules)
-- [Architecture](#architecture)
-- [Stack](#stack)
-- [Project Layout](#project-layout)
-- [Requirements](#requirements)
-- [Setup](#setup)
-- [Environment Variables](#environment-variables)
-- [Database](#database)
-- [Main Routes](#main-routes)
-- [Authentication Model](#authentication-model)
-- [API Documentation](#api-documentation)
-- [Scheduled Winner Selection](#scheduled-winner-selection)
-- [Notes](#notes)
-- [License](#license)
+External clients can access selected public data through bearer-token protected API endpoints.
 
-## Highlights
+## Main Features
 
-- CodeIgniter 3 MVC application running on PHP 8.x
-- MySQL-backed relational data model
-- Session-based browser authentication
-- Bearer-token protected public API with scope checks
-- Email verification and password reset via SMTP
-- Blind bidding workflow for featured alumni placement
-- Swagger UI and OpenAPI JSON documentation
-- Admin API-client management and access logs
-- University Analytics Dashboard with API-driven charts, filters, CSV/PDF exports, saved presets, and chart-image downloads
+- Alumni registration, login, email verification, and password reset
+- Alumni profile management with degrees, certifications, licences, courses, employment, and profile image upload
+- Blind bidding workflow for Alumni of the Day placement
+- Admin API-client creation, revocation, usage logs, and usage statistics
+- Public REST API secured with bearer tokens and scopes
+- API documentation page with OpenAPI JSON
+- University analytics dashboard with filters, charts, CSV export, and PDF export
+- CLI route for scheduled featured-alumni winner selection
 
-## Core Modules
+## Technology Stack
 
-### Web Modules
+| Area | Technology |
+| --- | --- |
+| Backend | PHP 8.x |
+| Framework | CodeIgniter 3 |
+| Database | MySQL |
+| Web server | Apache / XAMPP |
+| Frontend | Server-rendered PHP views, CSS, JavaScript |
+| Charts | Chart.js |
+| API docs | OpenAPI / Swagger UI |
+| Email | CodeIgniter Email Library with SMTP |
 
-- `Auth`
-  - registration
-  - login and logout
-  - email verification
-  - forgot-password and reset-password flows
-- `Profile`
-  - personal profile editing
-  - degrees
-  - certifications
-  - licences
-  - courses
-  - employment history
-  - profile image upload
-- `Bidding`
-  - blind bid placement and updates
-  - sponsorship tracking
-  - alumni event participation
-  - bid history
-  - manual winner selection
-- `Admin`
-  - API client creation
-  - client revocation
-  - usage logs
-  - usage statistics
-- `Analytics`
-  - admin/university-only graduate outcome dashboard
-  - programme, graduation-date, sector, skill, and keyword filters
-  - 8 interactive chart panels
-  - CSV/PDF report exports
-  - saved filter presets
-
-### API Modules
-
-- `/api/v1/auth/*`
-- `/api/v1/me/*`
-- `/api/v1/admin/*`
-- `/api/v1/featured`
-- `/api/v1/featured/today`
-- `/api/v1/featured-alumni/*`
-- `/api/v1/alumni/*`
-- `/api/v1/analytics/*`
-
-## Architecture
-
-The application uses a layered MVC structure:
-
-- `controllers`
-  - request handling and response setup
-- `models`
-  - persistence and database query logic
-- `views`
-  - server-rendered HTML pages and Swagger UI
-- `libraries`
-  - reusable business services such as authentication, admin operations, and winner selection
-- `assets/js`
-  - dashboard client code that calls bearer-token protected analytics API endpoints
-- `hooks`
-  - shared request-level concerns such as security headers
-
-Key controllers:
-
-- `Auth`
-- `Profile`
-- `Bidding`
-- `Admin`
-- `Api`
-- `Docs`
-- `Cron`
-- `Analytics`
-
-Key models:
-
-- `Alumni_model`
-- `Profile_model`
-- `Bid_model`
-- `Api_client_model`
-- `Analytics_model`
-
-Key services:
-
-- `Auth_service`
-- `Admin_service`
-- `Bid_winner_service`
-
-## Stack
-
-| Layer | Technology | Purpose |
-| --- | --- | --- |
-| Runtime | PHP 8.x | Server-side execution |
-| Framework | CodeIgniter 3 | MVC structure, routing, controllers, views, libraries |
-| Database | MySQL | Persistent relational storage |
-| Web Server | Apache / XAMPP | Local hosting and URL rewriting |
-| Session Auth | CodeIgniter Session Library | Browser authentication |
-| Validation | CodeIgniter Form Validation | Request and form validation |
-| Email | CodeIgniter Email Library + SMTP | Verification, reset, and notification emails |
-| API Auth | Bearer token validation | External API access control |
-| Documentation | Swagger UI + OpenAPI 3 | Interactive API reference |
-| Background Task | CLI cron route | Winner selection workflow |
-| Charts | Chart.js | Interactive dashboard visualizations |
-
-## Project Layout
+## Project Structure
 
 ```text
 alumni-influencers/
@@ -151,14 +46,15 @@ alumni-influencers/
 |   |-- libraries/
 |   |-- models/
 |   `-- views/
+|-- assets/
+|-- docs/
 |-- sql/
-|   |-- schema.sql
-|   `-- seed.sql
-|-- uploads/
+|   `-- schema.sql
 |-- system/
-|-- .env
+|-- tools/
+|-- uploads/
+|-- vendor/
 |-- .env.example
-|-- .htaccess
 |-- composer.json
 |-- index.php
 `-- README.md
@@ -168,199 +64,270 @@ alumni-influencers/
 
 - PHP 8.x
 - MySQL 8.x
-- Apache with `mod_rewrite` enabled, or equivalent local web server support
+- Apache with `mod_rewrite` enabled
+- Composer dependencies installed
+- XAMPP or an equivalent local PHP/MySQL environment
 
-## Setup
+## Local Setup
 
-1. Copy the environment template.
+1. Copy the environment file.
 
 ```bash
 cp .env.example .env
 ```
 
-2. Update database, base URL, and SMTP values in `.env`.
+2. Update `.env` with your local database, base URL, email, and security settings.
 
-3. Create the database schema.
+For a XAMPP folder like `htdocs/alumni-influencers`, the base URL is usually:
+
+```env
+BASE_URL=http://localhost/alumni-influencers/
+```
+
+3. Create the database tables.
 
 ```bash
 mysql -u root -p < sql/schema.sql
 ```
 
-4. Optionally load seed data.
+4. Make sure Apache rewrite is enabled and the project is accessible through the browser.
 
-```bash
-mysql -u root -p < sql/seed.sql
+```text
+http://localhost/alumni-influencers/
 ```
 
-5. Point the web server at the project root.
-
-6. Confirm that `.htaccess` rewriting is enabled.
+There is no seed file in this version. Add users and API clients through the application, database scripts, or your own test data as required.
 
 ## Environment Variables
 
-The project uses `.env` for runtime configuration.
+The project reads runtime configuration from `.env`.
 
-| Variable | Required | Purpose | Example |
-| --- | --- | --- | --- |
-| `CI_ENV` | Yes | Application environment | `development` |
-| `BASE_URL` | Yes | Public base URL with trailing slash | `http://localhost:8080/` |
-| `ENCRYPTION_KEY` | Yes | CodeIgniter encryption/session key; use a long random secret in production | `change-this-to-a-long-random-secret` |
-| `DB_HOST` | Yes | MySQL host | `localhost` |
-| `DB_USER` | Yes | MySQL username | `alumni_user` |
-| `DB_PASS` | Yes | MySQL password | `secret` |
-| `DB_NAME` | Yes | Database name | `alumni_platform` |
-| `SMTP_HOST` | Yes | SMTP server host | `smtp.gmail.com` |
-| `SMTP_PORT` | Yes | SMTP server port | `587` |
-| `SMTP_CRYPTO` | Yes | SMTP transport security | `tls` |
-| `SMTP_USER` | Yes | SMTP username | `example@gmail.com` |
-| `SMTP_PASS` | Yes | SMTP password or app password | `app-password` |
-| `SMTP_FROM` | Yes | Sender email address | `noreply@westminster.ac.uk` |
-| `SMTP_FROM_NAME` | Yes | Sender display name | `Alumni Influencers Platform` |
-| `UNIVERSITY_DOMAIN` | Yes | Allowed registration email domain | `westminster.ac.uk` |
-| `SESSION_TIMEOUT` | Yes | Session inactivity timeout in seconds | `7200` |
-| `LOG_THRESHOLD` | No | CodeIgniter log verbosity | `2` |
-| `VERIFICATION_TOKEN_EXPIRY` | Yes | Verification token lifetime in hours | `24` |
-| `RESET_TOKEN_EXPIRY` | Yes | Password reset token lifetime in hours | `1` |
-| `RATE_LIMIT` | Yes | Sensitive endpoint request cap per minute | `60` |
-| `CORS_ALLOWED_ORIGIN` | Yes | Allowed browser origin for API CORS headers | `https://localhost` |
-| `DEFAULT_API_SCOPE` | Yes | Default scope for newly created API clients | `read:alumni,read:analytics` |
-| `ANALYTICS_DASHBOARD_TOKEN` | Yes | Bearer token used by the dashboard web client | `test-bearer-token-12345` |
-| `MAX_FEATURES_PER_MONTH` | Yes | Monthly featured-placement limit | `3` |
-| `MAX_IMAGE_SIZE` | Yes | Max upload size in KB | `2048` |
-| `MAX_IMAGE_WIDTH` | Yes | Max upload width in pixels | `4000` |
-| `MAX_IMAGE_HEIGHT` | Yes | Max upload height in pixels | `4000` |
-| `UPLOAD_PATH` | Yes | Upload storage path | `./uploads/profile_images/` |
-
-Minimum local setup usually requires valid values for database, base URL, and SMTP settings.
+| Variable | Purpose |
+| --- | --- |
+| `CI_ENV` | Application environment, for example `development` |
+| `BASE_URL` | Public application URL with a trailing slash |
+| `DB_HOST` | MySQL host |
+| `DB_USER` | MySQL username |
+| `DB_PASS` | MySQL password |
+| `DB_NAME` | MySQL database name |
+| `SMTP_HOST` | SMTP server host |
+| `SMTP_PORT` | SMTP server port |
+| `SMTP_CRYPTO` | SMTP encryption type |
+| `SMTP_USER` | SMTP username |
+| `SMTP_PASS` | SMTP password or app password |
+| `SMTP_FROM` | Sender email address |
+| `SMTP_FROM_NAME` | Sender display name |
+| `ENCRYPTION_KEY` | CodeIgniter encryption and session key |
+| `UNIVERSITY_DOMAIN` | Email domain allowed for registration |
+| `SESSION_TIMEOUT` | Session idle timeout in seconds |
+| `RATE_LIMIT` | Request limit for sensitive endpoints |
+| `CORS_ALLOWED_ORIGIN` | Allowed API browser origin |
+| `DEFAULT_API_SCOPE` | Default scope for newly created API clients |
+| `ANALYTICS_DASHBOARD_TOKEN` | Bearer token used by the analytics dashboard |
+| `MAX_FEATURES_PER_MONTH` | Monthly Alumni of the Day win limit |
+| `UPLOAD_PATH` | Profile image upload folder |
 
 ## Database
 
-The database source of truth is:
+The database schema is stored in:
 
-- [`sql/schema.sql`](sql/schema.sql)
-- [`docs/analytics-architecture.md`](docs/analytics-architecture.md)
+- `sql/schema.sql`
 
-Optional seed data:
+The schema includes tables for:
 
-- [`sql/seed.sql`](sql/seed.sql)
-
-Seed login accounts use `TestPass1!`. The default admin account is `admin@westminster.ac.uk`; alumni accounts include `john.doe@westminster.ac.uk` and `jane.smith@westminster.ac.uk`.
-
-The schema covers:
-
-- shared `users` identity records
+- shared user accounts
 - alumni profile subtype records
-- admin users identified by `users.user_type = 'admin'`
-- profile records
-- bids
-- featured alumni history
-- sponsorships
-- event participation
-- programmes
-- industry sectors
-- alumni outcome records
-- skills and alumni skill evidence
-- analytics filter presets
-- API clients
-- API scopes
-- API access logs
+- profile qualifications and work history
+- bids and featured alumni history
+- sponsorship and event records
+- analytics programmes, sectors, outcomes, skills, and presets
+- API clients, API scopes, and API access logs
 
-## Main Routes
+The schema also inserts the required API scope lookup values so a fresh database can create scoped bearer-token clients immediately.
 
-### Web
+## Architecture
 
-- `/`
-- `/auth/register`
-- `/auth/login`
-- `/auth/logout`
-- `/auth/verify/{token}`
-- `/auth/forgot-password`
-- `/auth/reset-password/{token}`
-- `/profile`
-- `/bidding`
-- `/admin`
-- `/analytics`
-- `/analytics/export/csv`
-- `/analytics/export/pdf`
-- `/admin/api-clients`
-- `/api-docs`
+The application follows the CodeIgniter MVC pattern with a small service layer for shared business rules.
 
-### API
+| Layer | Main files | Responsibility |
+| --- | --- | --- |
+| Controllers | `application/controllers` | Handle routes, validate requests, choose views, and return JSON responses |
+| Models | `application/models` | Read and write database records using CodeIgniter query builder |
+| Libraries | `application/libraries` | Keep reusable business logic such as authentication, API-client handling, and winner selection |
+| Views | `application/views` | Render browser pages for alumni, admins, analytics, and API documentation |
+| Assets | `assets/js`, `assets/css` | Run dashboard interactions, API calls, charts, exports, and page styling |
+| Database | `sql/schema.sql` | Define normalized tables, keys, indexes, and relationships |
 
-- `/api/v1/auth/register`
-- `/api/v1/auth/verify`
-- `/api/v1/auth/forgot-password`
-- `/api/v1/auth/reset-password`
-- `/api/v1/auth/login`
-- `/api/v1/auth/me`
-- `/api/v1/auth/logout`
-- `/api/v1/me/profile`
-- `/api/v1/me/bids`
-- `/api/v1/me/sponsorships`
-- `/api/v1/me/events`
-- `/api/v1/featured`
-- `/api/v1/featured/today`
-- `/api/v1/featured-alumni`
-- `/api/v1/alumni`
-- `/api/v1/analytics/options`
-- `/api/v1/analytics/overview`
-- `/api/v1/analytics/alumni`
-- `/api/v1/donations/summary`
+Important flows:
 
-## Authentication Model
+- Browser login uses sessions. Alumni users can access profile and bidding pages, while admin users can access API-client management and analytics.
+- Public API access uses bearer tokens. Tokens are generated once, stored as SHA-256 hashes, and checked on each protected API request.
+- API scopes restrict each client to the endpoints it needs. For example, the analytics dashboard uses `read:alumni,read:analytics`, while an Alumni of the Day client uses `read:alumni_of_day`.
+- The analytics dashboard calls `/api/v1/analytics/*` endpoints, receives chart-ready JSON, and renders interactive Chart.js visualisations.
+- Blind bidding stores pending bids for future featured dates. The winner-selection service marks the highest eligible bid as the featured alumnus.
 
-### Browser Users
+## Security Design
 
-- authenticated through CodeIgniter sessions
-- alumni sessions use `users` plus the `alumni` subtype and can access profile and bidding pages
-- admin sessions use `users.user_type = 'admin'` and can access analytics and API-client management
-- protected by session timeout and regeneration rules
-- CSRF protection applied to browser form flows
-- university analytics and API-client management pages require an admin session
+- Passwords are hashed with bcrypt using cost 12.
+- Verification, reset, API, and bearer tokens are generated with `random_bytes`.
+- Verification and reset tokens are stored as hashes and have expiry times.
+- Sessions are regenerated after login and protected by an inactivity timeout.
+- CSRF protection is enabled for browser forms.
+- API routes are excluded from CSRF and protected with bearer tokens and scopes.
+- Security headers, CSP, CORS headers, and frame protection are set in the security header hook.
+- Rate limiting is applied to sensitive authentication flows.
+- Output is escaped in views using `htmlspecialchars` where user-controlled values are displayed.
 
-### API Clients
+## Main Web Routes
 
-- authenticated through bearer tokens
-- tokens validated against stored client records
-- scope-based authorization applied to protected resources
-- analytics dashboard client uses `read:alumni,read:analytics`
-- mobile AR-style client uses `read:alumni_of_day`
-- unsupported scope access returns HTTP 403 with the required scope in the JSON response
+| Route | Purpose |
+| --- | --- |
+| `/` | Main application entry |
+| `/auth/register` | Alumni registration |
+| `/auth/login` | User login |
+| `/auth/logout` | Logout |
+| `/auth/forgot-password` | Password reset request |
+| `/profile` | Alumni profile management |
+| `/bidding` | Alumni bidding area |
+| `/admin` | Admin dashboard |
+| `/admin/api-clients` | API-client management |
+| `/analytics` | University analytics dashboard |
+| `/api-docs` | API documentation |
+| `/docs/spec` | OpenAPI JSON |
 
-Supported CW2 scopes:
+## API Routes
 
-- `read:alumni`
-- `read:analytics`
-- `read:donations`
-- `read:alumni_of_day`
-- `write:alumni`
+| Route | Purpose |
+| --- | --- |
+| `/api/v1/auth/register` | API registration |
+| `/api/v1/auth/login` | API login |
+| `/api/v1/auth/me` | Current API user |
+| `/api/v1/me/profile` | Authenticated alumni profile |
+| `/api/v1/me/bids` | Authenticated alumni bids |
+| `/api/v1/me/sponsorships` | Authenticated alumni sponsorships |
+| `/api/v1/me/events` | Authenticated alumni events |
+| `/api/v1/featured` | Featured alumni |
+| `/api/v1/featured/today` | Alumni of the Day |
+| `/api/v1/featured-alumni` | Featured alumni listing |
+| `/api/v1/alumni` | Alumni directory API |
+| `/api/v1/analytics/options` | Analytics filter options |
+| `/api/v1/analytics/overview` | Analytics overview data |
+| `/api/v1/analytics/alumni` | Filtered alumni analytics |
+| `/api/v1/donations/summary` | Donation summary |
 
-Legacy scopes are still accepted for backward compatibility:
+## API Authentication
 
-- `alumni:read`
-- `alumni:write`
-- `featured:read`
+The public API uses bearer authentication.
+
+```http
+Authorization: Bearer <token>
+```
+
+API clients are created by an admin from:
+
+```text
+/admin/api-clients
+```
+
+Use the generated bearer token in Postman or Swagger. API keys are not required.
+
+## API Scopes
+
+The current CW2 scope names are:
+
+| Scope | Used for |
+| --- | --- |
+| `read:alumni` | Alumni directory and alumni profile read endpoints |
+| `read:analytics` | Analytics dashboard API endpoints |
+| `read:donations` | Donation summary endpoint |
+| `read:alumni_of_day` | Alumni of the Day / featured alumni endpoints |
+| `write:alumni` | Alumni write/update endpoints |
+
+Some legacy scopes are still accepted by the backend for compatibility:
+
+| Legacy scope | Current equivalent |
+| --- | --- |
+| `alumni:read` | `read:alumni` |
+| `alumni:write` | `write:alumni` |
+| `featured:read` | `read:alumni_of_day` |
+
+If Postman returns `403 Forbidden` with `Insufficient token scope`, create or select an API client that includes the scope needed by that endpoint. For Alumni of the Day, use `read:alumni_of_day`.
+
+The admin API-client form only lists the current CW2 scope names. Legacy scope aliases are supported only so older existing clients continue to work.
+
+## Checking the API in Postman
+
+1. Open Postman and create a new request.
+2. Set the method and URL, for example:
+
+```text
+GET http://localhost/alumni-influencers/api/v1/featured/today
+```
+
+3. Open the Authorization tab.
+4. Select `Bearer Token`.
+5. Paste the token generated from the admin API-client page.
+6. Send the request.
+
+For Alumni of the Day, the selected API client must include:
+
+```text
+read:alumni_of_day
+```
 
 ## API Documentation
 
-- Swagger UI: `/api-docs`
+- API docs page: `/api-docs`
 - OpenAPI JSON: `/docs/spec`
+
+The docs page is intended for checking endpoints during development. Authorize with a bearer token, then expand an endpoint and use the built-in request tester.
 
 ## Scheduled Winner Selection
 
-The project includes a CLI entry point for featured-alumni winner resolution.
+The featured-alumni winner can be selected from the CLI.
 
 ```bash
 php index.php cron select_winner
 php index.php cron select_winner 2026-03-15
 ```
 
+The first command runs for the current date. The second command runs for a specific date.
+
+## Demo Data Checklist
+
+There is no seed file in this version. Before a viva or deployment demo, make sure the database contains enough real or test records to demonstrate:
+
+- at least one admin account
+- several alumni accounts with completed profile sections
+- programmes, industry sectors, alumni outcomes, and skills
+- bids, sponsorships, event participation, and at least one featured alumnus
+- API clients for analytics and Alumni of the Day
+- API access logs generated by calling protected endpoints
+
+The analytics dashboard depends on these records. Empty tables will make the charts appear empty even when the code is working.
+
+## Viva Demonstration Checklist
+
+- Register an alumni user with the configured university email domain.
+- Show login, logout, verification, and password reset.
+- Edit an alumni profile with qualifications and employment history.
+- Place a blind bid and show that bid updates can only increase the amount.
+- Run winner selection and show the featured alumnus.
+- Create an analytics API client with `read:alumni,read:analytics`.
+- Create an Alumni of the Day API client with `read:alumni_of_day`.
+- Show a correct bearer token request in Postman or the API docs.
+- Show a 403 response by using a token without the required scope.
+- Demonstrate analytics filters, charts, CSV export, PDF export, saved presets, and chart image download.
+- Show API usage logs with endpoint names, timestamps, and client names.
+
 ## Notes
 
-- The application is built for a university alumni use case and restricts registration by configured email domain.
+- Registration is restricted by the configured university email domain.
 - Uploaded profile images are stored under `uploads/profile_images/`.
-- The API supports both self-service session endpoints and external bearer-token endpoints.
+- Admin-only pages require a logged-in admin session.
+- API endpoints require bearer tokens when protected by scope checks.
+- `::1` in logs means the request came from localhost over IPv6.
 
 ## License
 
-The project is based on CodeIgniter and includes the framework under its original licensing terms.
+This project is based on CodeIgniter 3 and includes the framework under its original licensing terms.
