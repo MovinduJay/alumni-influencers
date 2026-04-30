@@ -639,5 +639,9 @@
     });
 
     initSidebarNavigation();
+    if (!token) {
+        setError('Analytics API token is not configured. Create an API client with read:alumni,read:analytics and set ANALYTICS_DASHBOARD_TOKEN in .env.');
+        return;
+    }
     load();
 }());

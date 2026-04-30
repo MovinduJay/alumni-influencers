@@ -22,23 +22,11 @@
         </h1>
     </div>
 
-    <div id="swagger-ui"></div>
+    <div id="swagger-ui" data-spec-url="<?php echo htmlspecialchars(site_url('docs/spec'), ENT_QUOTES, 'UTF-8'); ?>"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-standalone-preset.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        SwaggerUIBundle({
-            url: "<?php echo site_url('docs/spec'); ?>",
-            dom_id: '#swagger-ui',
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIStandalonePreset
-            ],
-            layout: "StandaloneLayout",
-            deepLinking: true,
-            validatorUrl: null
-        });
-    </script>
+    <script src="<?php echo base_url('assets/js/api-docs.js'); ?>"></script>
 </body>
 </html>

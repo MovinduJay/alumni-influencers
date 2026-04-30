@@ -16,7 +16,7 @@ class Analytics extends MY_Admin_Controller
             'title' => 'University Analytics',
             'options' => $this->Analytics_model->filter_options(),
             'presets' => $this->Analytics_model->get_presets((int) $this->session->userdata('admin_id')),
-            'analytics_token' => getenv('ANALYTICS_DASHBOARD_TOKEN') ?: 'test-bearer-token-12345',
+            'analytics_token' => getenv('ANALYTICS_DASHBOARD_TOKEN') ?: '',
             'csrf_name' => $this->security->get_csrf_token_name(),
             'csrf_hash' => $this->security->get_csrf_hash()
         );
